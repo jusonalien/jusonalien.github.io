@@ -1,0 +1,220 @@
+<!doctype html>
+<html lang="en-us">
+<head>
+
+    <meta charset="utf-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    
+
+    <title> | jusonalien的博客</title>
+    <meta property="og:title" content=" - jusonalien的博客">
+    <meta property="og:type" content="article">
+        
+        
+    <meta name="Keywords" content="">
+    <meta name="description" content="">
+        
+    <meta name="author" content="">
+    <meta property="og:url" content="http://jusonalien.github.com/pbft-in-deep/">
+    <link rel="shortcut icon" href='/favicon.ico'  type="image/x-icon">
+
+    <link rel="stylesheet" href='/css/normalize.css'>
+    <link rel="stylesheet" href='/css/style.css'>
+    <script type="text/javascript" src="//cdn.bootcdn.net/ajax/libs/jquery/3.4.1/jquery.min.js"></script>
+
+    
+    
+    
+    
+    
+    
+</head>
+
+<body>
+    <header id="header" class="clearfix">
+    <div class="container">
+        <div class="col-group">
+            <div class="site-name ">
+                
+                    <a id="logo" href="http://jusonalien.github.com/">
+                        jusonalien的博客
+                    </a>
+                
+                
+            </div>
+            <div>
+                <nav id="nav-menu" class="clearfix">
+                    <a class="" href="http://jusonalien.github.com/">首页</a>
+                    
+                </nav>
+            </div>
+        </div>
+    </div>
+</header>
+
+    <div id="body">
+        <div class="container">
+            <div class="col-group">
+
+                <div class="col-8" id="main">
+                    
+<div class="res-cons">
+    
+    <article class="post">
+        <header>
+            <h1 class="post-title"></h1>
+        </header>
+        <date class="post-meta meta-date">
+            1年1月1日
+        </date>
+        
+        
+        
+        <div class="post-content">
+            <p>Title: pBFT为什么设计成这样？
+Date: 2021-12-21 23:01:03
+Tags: 共识机制
+Category: BlockChain</p>
+<h2 id="前文">前文</h2>
+<p>网上太多关于介绍pBFT这门古典艺术的文章，但大部分文章都是只是简单的介绍一下过程，没有对其中的原理（Why）做过介绍，其实最好的学习方式是直接看pBFT的<a href="https://pmg.csail.mit.edu/papers/osdi99.pdf">原论文</a>，这里不做太多描述性的内容，尽可能地带领读者往pBFT的深入一点的内容去思考</p>
+<h2 id="n3f1是怎么来的">n&gt;=3f+1是怎么来的？</h2>
+<p><code>f</code>即可容忍的拜占庭节点数最大值，总节点数n要&gt;=3f+1, pBFT的论文直接引用了如下的一个结论：</p>
+<blockquote>
+<p>在一个异步的分布式环境中，如果有<code>f</code>个作恶节点，如果要得到安全+活性的保障，副本节点要至少<code>3f+1</code>个</p>
+</blockquote>
+<p>里面的数学层面的证明请参考<a href="pdf/../../pdf/Asynchronous%20Consensus%20and%20Broadcast%20Protocols.pdf">Asynchronous Consensus and Broadcast Protocols</a>的Theorem 4的证明给出了一个结论</p>
+<p>但是pBFT的论文里面却给出这样的解释：</p>
+<blockquote>
+<p>如果有<code>f</code>个作恶节点，那么剩下的<code>n-f</code>个副本节点是要能保持通信的，由于有<code>f</code>个节点可能会故障并且不会有反应。有f个没响应的副本可能并非问题节点，因此那些响应的节点中有f个可能是故障的，即使这样，那些非问题节点的数量也要比有问题的节点数量多 <code>n-2f&gt;f</code> =&gt; <code>n&gt;3f</code></p>
+</blockquote>
+<p>总的来说，pBFT就是将推导环境放到最极端的场景下，有f个节点挂了，f个节点还作恶，那么剩下的就只有n-2f个节点了，根据古典拜占庭的原理，非拜占庭节点数要多余拜占庭节点数，就出现 n-2f&gt;f</p>
+<h2 id="为什么是三个步骤">为什么是三个步骤？</h2>
+<h3 id="pre-prepare-和prepare的作用">Pre-Prepare 和Prepare的作用</h3>
+<p>确保所有请求在同一个View的内的有序性</p>
+<p>prepared消息定义：<code>preared(m,v,n,i)</code></p>
+<p>每个副本收到2f+1个（包括自己）Pre-Prepare的请求的时候，就可以进入到Prepared的状态</p>
+<p>总量为3f+1，如果收到2f的时候剩下的f个副本超时发送，可能是故障了，就可忽略不用再等待（先将故障的副本给排除掉），
+收到2f个消息并且验证通过的时候，说明至少有f+1个诚实节点</p>
+<p>如果<code>preared(m',v,n,i)</code> 也被认证通过了，那么至少有个一个诚实节点同时发送了 <code>preared(m',v,n,i)</code>,<code>preared(m,v,n,i)</code> 这两个消息，这不就矛盾了么？</p>
+<blockquote>
+<p>解释：认证 preared(m&rsquo;,v,n,i) 有 2f+1个节点，认证preared(m,v,n,i) 也有2f+1个节点，从集合关系角度来看，即使里面混入了最大的f个欺骗节点，那这两个节点当中剩余的诚实节点都至少有一个公共的诚实节点，那就导致这个诚实节点同时发送了两个认证消息，导致了矛盾</p>
+</blockquote>
+<h3 id="prepare-与commit的作用">Prepare 与Commit的作用</h3>
+<p>确保夸View的请求的顺序</p>
+<p>当节点进入到Prepared阶段的时候，就开始发起Commit请求进入到Commit-local的状态</p>
+<p>Commit-local(m,v,n,i)认证通过的条件，prepared(m,v,n,i)认证通过，并且收到2f+1（包括节点自身）个commits事件</p>
+
+        </div>
+
+        
+
+
+        
+
+
+        <div class="post-meta meta-tags">
+            
+            没有标签
+            
+        </div>
+    </article>
+    
+    
+
+    
+    
+    
+    
+
+</div>
+
+                    <footer id="footer">
+    <div>
+        &copy; 2022 <a href="http://jusonalien.github.com/">jusonalien的博客 By </a>
+        
+    </div>
+    <br />
+    <div>
+        <div class="github-badge">
+            <a href="https://gohugo.io/" target="_black" rel="nofollow"><span class="badge-subject">Powered by</span><span class="badge-value bg-blue">Hugo</span></a>
+        </div>
+        <div class="github-badge">
+            <a href="https://www.flysnow.org/" target="_black"><span class="badge-subject">Design by</span><span class="badge-value bg-brightgreen">飞雪无情</span></a>
+        </div>
+        <div class="github-badge">
+            <a href="https://github.com/flysnow-org/maupassant-hugo" target="_black"><span class="badge-subject">Theme</span><span class="badge-value bg-yellowgreen">Maupassant</span></a>
+        </div>
+    </div>
+</footer>
+
+
+    
+    
+    <script type="text/javascript">
+        window.MathJax = {
+            tex2jax: {
+                inlineMath: [['$', '$']],
+                processEscapes: true
+                }
+            };
+    </script>
+    <script src='//cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.5/MathJax.js?config=TeX-MML-AM_CHTML' async></script>
+
+<a id="rocket" href="#top"></a>
+<script type="text/javascript" src='/js/totop.js?v=0.0.0' async=""></script>
+
+
+
+                </div>
+
+                <div id="secondary">
+    <section class="widget">
+        <form id="search" action='//www.google.com/search' method="get" accept-charset="utf-8" target="_blank" _lpchecked="1">
+      
+      <input type="text" name="q" maxlength="20" placeholder="Search">
+      <input type="hidden" name="sitesearch" value="http://jusonalien.github.com/">
+      <button type="submit" class="submit icon-search"></button>
+</form>
+    </section>
+    
+    <section class="widget">
+        <h3 class="widget-title">最近文章</h3>
+<ul class="widget-list">
+    
+</ul>
+    </section>
+
+    
+
+    <section class="widget">
+        <h3 class="widget-title"><a href='/categories/'>分类</a></h3>
+<ul class="widget-list">
+    
+</ul>
+    </section>
+
+    <section class="widget">
+        <h3 class="widget-title"><a href='/tags/'>标签</a></h3>
+<div class="tagcloud">
+    
+    <a href="http://jusonalien.github.com/tags/defi/">DeFi</a>
+    
+</div>
+    </section>
+
+    
+
+    <section class="widget">
+        <h3 class="widget-title">其它</h3>
+        <ul class="widget-list">
+            <li><a href="http://jusonalien.github.com/index.xml">文章 RSS</a></li>
+        </ul>
+    </section>
+</div>
+            </div>
+        </div>
+    </div>
+</body>
+
+</html>

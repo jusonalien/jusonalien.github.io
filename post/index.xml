@@ -1,12 +1,12 @@
 <?xml version="1.0" encoding="utf-8" standalone="yes"?>
 <rss version="2.0" xmlns:atom="http://www.w3.org/2005/Atom">
   <channel>
-    <title>jusonalien的博客</title>
-    <link>http://jusonalien.github.com/</link>
-    <description>Recent content on jusonalien的博客</description>
+    <title>Posts on jusonalien的博客</title>
+    <link>http://jusonalien.github.com/post/</link>
+    <description>Recent content in Posts on jusonalien的博客</description>
     <generator>Hugo -- gohugo.io</generator>
     <language>en-us</language>
-    <lastBuildDate>Thu, 26 May 2022 10:23:03 +0000</lastBuildDate><atom:link href="http://jusonalien.github.com/index.xml" rel="self" type="application/rss+xml" />
+    <lastBuildDate>Thu, 26 May 2022 10:23:03 +0000</lastBuildDate><atom:link href="http://jusonalien.github.com/post/index.xml" rel="self" type="application/rss+xml" />
     <item>
       <title>HackerDao攻击分析&#43;复现</title>
       <link>http://jusonalien.github.com/post/analysis-hackerdao-attack/</link>
@@ -68,24 +68,6 @@
       
       <guid>http://jusonalien.github.com/post/dynamic-merkle/</guid>
       <description>背景 我们常见的merkle-tree通常都是二叉树的结构，被经常用在一些如ipfs，p2p下载，blockchain等分布式去中心化的场景之</description>
-    </item>
-    
-    <item>
-      <title>Archives</title>
-      <link>http://jusonalien.github.com/archives/</link>
-      <pubDate>Mon, 01 Jan 0001 00:00:00 +0000</pubDate>
-      
-      <guid>http://jusonalien.github.com/archives/</guid>
-      <description></description>
-    </item>
-    
-    <item>
-      <title>关于</title>
-      <link>http://jusonalien.github.com/about/</link>
-      <pubDate>Mon, 01 Jan 0001 00:00:00 +0000</pubDate>
-      
-      <guid>http://jusonalien.github.com/about/</guid>
-      <description>最近在研究DeFi，zk-SNARKs等等跟区块链相关的任何东西</description>
     </item>
     
   </channel>

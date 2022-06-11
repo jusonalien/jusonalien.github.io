@@ -1,0 +1,243 @@
+<!doctype html>
+<html lang="en-us">
+<head>
+
+    <meta charset="utf-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    
+
+    <title> | jusonalien的博客</title>
+    <meta property="og:title" content=" - jusonalien的博客">
+    <meta property="og:type" content="article">
+        
+        
+    <meta name="Keywords" content="">
+    <meta name="description" content="">
+        
+    <meta name="author" content="">
+    <meta property="og:url" content="http://jusonalien.github.com/parse-data-on-bolock-chain/">
+    <link rel="shortcut icon" href='/favicon.ico'  type="image/x-icon">
+
+    <link rel="stylesheet" href='/css/normalize.css'>
+    <link rel="stylesheet" href='/css/style.css'>
+    <script type="text/javascript" src="//cdn.bootcdn.net/ajax/libs/jquery/3.4.1/jquery.min.js"></script>
+
+    
+    
+    
+    
+    
+    
+</head>
+
+<body>
+    <header id="header" class="clearfix">
+    <div class="container">
+        <div class="col-group">
+            <div class="site-name ">
+                
+                    <a id="logo" href="http://jusonalien.github.com/">
+                        jusonalien的博客
+                    </a>
+                
+                
+            </div>
+            <div>
+                <nav id="nav-menu" class="clearfix">
+                    <a class="" href="http://jusonalien.github.com/">首页</a>
+                    
+                </nav>
+            </div>
+        </div>
+    </div>
+</header>
+
+    <div id="body">
+        <div class="container">
+            <div class="col-group">
+
+                <div class="col-8" id="main">
+                    
+<div class="res-cons">
+    
+    <article class="post">
+        <header>
+            <h1 class="post-title"></h1>
+        </header>
+        <date class="post-meta meta-date">
+            1年1月1日
+        </date>
+        
+        
+        
+        <div class="post-content">
+            <p>Title: UniSwap-V2合约的数据解析入门
+Date: 2022-04-27 17:48:04
+Tags: 链数据解析
+Category: BlockChain</p>
+<p>前阵子在兴趣驱使之下研究DeFi上的套利搬砖机器人的原理，过程有点坎坷，很多东西都只能靠自己去摸索踩坑出来，这篇文章用来记录一下关于链上智能合约数据的解析过程</p>
+<p>我的目标是想看同一个链上UniSwap-V2模型的不同的Dex之前共同的交易对之间的价格差异，如果之间差异大于我的期望值，那就说明存在可套利的空间</p>
+<p>那么我需要做的是就是要不断的及时轮询共同交易对的状态数据，以此获取准确的价格差</p>
+<p>可以看看UniSwap-V2官方提供的sol级别的interface</p>
+<p>我们知道，在创建一个LP的时候，是由<a href="https://github.com/Uniswap/v2-core/blob/master/contracts/UniswapV2Factory.sol"><code>IUniswapV2Factory</code></a>这个工厂合约来完成的，可以看看对应的interface，找找<a href="https://docs.uniswap.org/protocol/V2/reference/smart-contracts/factory">官方文档</a>可以搜到很多有用的功能函数，比如</p>
+<ul>
+<li>allPairsLength 返回所有LP的数目</li>
+<li>allPairs 通过数组下标返回对应LP的地址</li>
+</ul>
+<p>通过这两个函数我们可以先获取所有的LP数目，然后依次通过数组下表即可获取所有LP的地址</p>
+<p>接下来，我们通过LP的地址再去剖析每个LP内的数据，对于LP的数据结构，可以直接看UniSwap-V2的<a href="https://github.com/Uniswap/v2-core/blob/master/contracts/UniswapV2Pair.sol">UniswapV2Pair</a>合约代码</p>
+<ul>
+<li>UniswapV2Pair: <a href="https://github.com/Uniswap/v2-core/blob/master/contracts/UniswapV2Pair.sol">https://github.com/Uniswap/v2-core/blob/master/contracts/UniswapV2Pair.sol</a></li>
+</ul>
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-javascript" data-lang="javascript"><span style="display:flex;"><span><span style="color:#a6e22e">address</span> <span style="color:#66d9ef">public</span> <span style="color:#a6e22e">factory</span>; <span style="color:#75715e">// LP地址
+</span></span></span><span style="display:flex;"><span><span style="color:#75715e"></span><span style="color:#a6e22e">address</span> <span style="color:#66d9ef">public</span> <span style="color:#a6e22e">token0</span>; <span style="color:#75715e">// token0的合约地址
+</span></span></span><span style="display:flex;"><span><span style="color:#75715e"></span><span style="color:#a6e22e">address</span> <span style="color:#66d9ef">public</span> <span style="color:#a6e22e">token1</span>; <span style="color:#75715e">// token1的合约地址
+</span></span></span></code></pre></div><p>其中，factory是由 token0，token1经过特定的哈希算法后得出来的，阅读上述代码，可以找到一个关键的函数</p>
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-javascript" data-lang="javascript"><span style="display:flex;"><span><span style="color:#66d9ef">function</span> <span style="color:#a6e22e">getReserves</span>() <span style="color:#66d9ef">public</span> <span style="color:#a6e22e">view</span> <span style="color:#a6e22e">returns</span> (<span style="color:#a6e22e">uint112</span> <span style="color:#a6e22e">_reserve0</span>, <span style="color:#a6e22e">uint112</span> <span style="color:#a6e22e">_reserve1</span>, <span style="color:#a6e22e">uint32</span> <span style="color:#a6e22e">_blockTimestampLast</span>) {
+</span></span><span style="display:flex;"><span>    <span style="color:#a6e22e">_reserve0</span> <span style="color:#f92672">=</span> <span style="color:#a6e22e">reserve0</span>;
+</span></span><span style="display:flex;"><span>    <span style="color:#a6e22e">_reserve1</span> <span style="color:#f92672">=</span> <span style="color:#a6e22e">reserve1</span>;
+</span></span><span style="display:flex;"><span>    <span style="color:#a6e22e">_blockTimestampLast</span> <span style="color:#f92672">=</span> <span style="color:#a6e22e">blockTimestampLast</span>;
+</span></span><span style="display:flex;"><span>}
+</span></span></code></pre></div><p>该函数可以返回token0和token1的对应的数量，通过$K=X*Y$的模型我们就能推断出对应的价格，在计算价格的时候也要注意手续费等相关的问题，这点建议直接套用官方的计算价格的函数，放到你的业务合约代码中即可</p>
+<ul>
+<li><a href="https://github.com/Uniswap/v2-periphery/blob/master/contracts/libraries/UniswapV2Library.sol#L53">https://github.com/Uniswap/v2-periphery/blob/master/contracts/libraries/UniswapV2Library.sol#L53</a></li>
+</ul>
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-javascript" data-lang="javascript"><span style="display:flex;"><span><span style="color:#75715e">//这里有两种计价模型，
+</span></span></span><span style="display:flex;"><span><span style="color:#75715e"></span>
+</span></span><span style="display:flex;"><span><span style="color:#75715e">// given an input amount of an asset and pair reserves, returns the maximum output amount of the other asset
+</span></span></span><span style="display:flex;"><span><span style="color:#75715e">// 你有amountIn个token-x 计算出能兑换amountOut个token-y
+</span></span></span><span style="display:flex;"><span><span style="color:#75715e"></span><span style="color:#66d9ef">function</span> <span style="color:#a6e22e">getAmountOut</span>(<span style="color:#a6e22e">uint</span> <span style="color:#a6e22e">amountIn</span>, <span style="color:#a6e22e">uint</span> <span style="color:#a6e22e">reserveIn</span>, <span style="color:#a6e22e">uint</span> <span style="color:#a6e22e">reserveOut</span>) <span style="color:#a6e22e">internal</span> <span style="color:#a6e22e">pure</span> <span style="color:#a6e22e">returns</span> (<span style="color:#a6e22e">uint</span> <span style="color:#a6e22e">amountOut</span>) {
+</span></span><span style="display:flex;"><span>    <span style="color:#a6e22e">require</span>(<span style="color:#a6e22e">amountIn</span> <span style="color:#f92672">&gt;</span> <span style="color:#ae81ff">0</span>, <span style="color:#e6db74">&#39;UniswapV2Library: INSUFFICIENT_INPUT_AMOUNT&#39;</span>);
+</span></span><span style="display:flex;"><span>    <span style="color:#a6e22e">require</span>(<span style="color:#a6e22e">reserveIn</span> <span style="color:#f92672">&gt;</span> <span style="color:#ae81ff">0</span> <span style="color:#f92672">&amp;&amp;</span> <span style="color:#a6e22e">reserveOut</span> <span style="color:#f92672">&gt;</span> <span style="color:#ae81ff">0</span>, <span style="color:#e6db74">&#39;UniswapV2Library: INSUFFICIENT_LIQUIDITY&#39;</span>);
+</span></span><span style="display:flex;"><span>    <span style="color:#a6e22e">uint</span> <span style="color:#a6e22e">amountInWithFee</span> <span style="color:#f92672">=</span> <span style="color:#a6e22e">amountIn</span>.<span style="color:#a6e22e">mul</span>(<span style="color:#ae81ff">997</span>);
+</span></span><span style="display:flex;"><span>    <span style="color:#a6e22e">uint</span> <span style="color:#a6e22e">numerator</span> <span style="color:#f92672">=</span> <span style="color:#a6e22e">amountInWithFee</span>.<span style="color:#a6e22e">mul</span>(<span style="color:#a6e22e">reserveOut</span>);
+</span></span><span style="display:flex;"><span>    <span style="color:#a6e22e">uint</span> <span style="color:#a6e22e">denominator</span> <span style="color:#f92672">=</span> <span style="color:#a6e22e">reserveIn</span>.<span style="color:#a6e22e">mul</span>(<span style="color:#ae81ff">1000</span>).<span style="color:#a6e22e">add</span>(<span style="color:#a6e22e">amountInWithFee</span>);
+</span></span><span style="display:flex;"><span>    <span style="color:#a6e22e">amountOut</span> <span style="color:#f92672">=</span> <span style="color:#a6e22e">numerator</span> <span style="color:#f92672">/</span> <span style="color:#a6e22e">denominator</span>;
+</span></span><span style="display:flex;"><span>}
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span><span style="color:#75715e">//given an output amount of an asset and pair reserves, returns a required input amount of the other asset
+</span></span></span><span style="display:flex;"><span><span style="color:#75715e">// 你要兑换amountOut个token-y，计算出需要多少个token-x
+</span></span></span><span style="display:flex;"><span><span style="color:#75715e"></span><span style="color:#66d9ef">function</span> <span style="color:#a6e22e">getAmountIn</span>(<span style="color:#a6e22e">uint</span> <span style="color:#a6e22e">amountOut</span>, <span style="color:#a6e22e">uint</span> <span style="color:#a6e22e">reserveIn</span>, <span style="color:#a6e22e">uint</span> <span style="color:#a6e22e">reserveOut</span>) <span style="color:#a6e22e">internal</span> <span style="color:#a6e22e">pure</span> <span style="color:#a6e22e">returns</span> (<span style="color:#a6e22e">uint</span> <span style="color:#a6e22e">amountIn</span>) {
+</span></span><span style="display:flex;"><span>    <span style="color:#a6e22e">require</span>(<span style="color:#a6e22e">amountOut</span> <span style="color:#f92672">&gt;</span> <span style="color:#ae81ff">0</span>, <span style="color:#e6db74">&#39;UniswapV2Library: INSUFFICIENT_OUTPUT_AMOUNT&#39;</span>);
+</span></span><span style="display:flex;"><span>    <span style="color:#a6e22e">require</span>(<span style="color:#a6e22e">reserveIn</span> <span style="color:#f92672">&gt;</span> <span style="color:#ae81ff">0</span> <span style="color:#f92672">&amp;&amp;</span> <span style="color:#a6e22e">reserveOut</span> <span style="color:#f92672">&gt;</span> <span style="color:#ae81ff">0</span>, <span style="color:#e6db74">&#39;UniswapV2Library: INSUFFICIENT_LIQUIDITY&#39;</span>);
+</span></span><span style="display:flex;"><span>    <span style="color:#a6e22e">uint</span> <span style="color:#a6e22e">numerator</span> <span style="color:#f92672">=</span> <span style="color:#a6e22e">reserveIn</span>.<span style="color:#a6e22e">mul</span>(<span style="color:#a6e22e">amountOut</span>).<span style="color:#a6e22e">mul</span>(<span style="color:#ae81ff">1000</span>);
+</span></span><span style="display:flex;"><span>    <span style="color:#a6e22e">uint</span> <span style="color:#a6e22e">denominator</span> <span style="color:#f92672">=</span> <span style="color:#a6e22e">reserveOut</span>.<span style="color:#a6e22e">sub</span>(<span style="color:#a6e22e">amountOut</span>).<span style="color:#a6e22e">mul</span>(<span style="color:#ae81ff">997</span>);
+</span></span><span style="display:flex;"><span>    <span style="color:#a6e22e">amountIn</span> <span style="color:#f92672">=</span> (<span style="color:#a6e22e">numerator</span> <span style="color:#f92672">/</span> <span style="color:#a6e22e">denominator</span>).<span style="color:#a6e22e">add</span>(<span style="color:#ae81ff">1</span>);
+</span></span><span style="display:flex;"><span>}
+</span></span></code></pre></div><h2 id="总结">总结</h2>
+<p>要解析链上的智能合约的数据并加以使用，首先要对合约的架构，代码比较熟悉，充分了解合约的数据结构后再去设计对应的数据获取解析方案</p>
+
+        </div>
+
+        
+
+
+        
+
+
+        <div class="post-meta meta-tags">
+            
+            没有标签
+            
+        </div>
+    </article>
+    
+    
+
+    
+    
+    
+    
+
+</div>
+
+                    <footer id="footer">
+    <div>
+        &copy; 2022 <a href="http://jusonalien.github.com/">jusonalien的博客 By </a>
+        
+    </div>
+    <br />
+    <div>
+        <div class="github-badge">
+            <a href="https://gohugo.io/" target="_black" rel="nofollow"><span class="badge-subject">Powered by</span><span class="badge-value bg-blue">Hugo</span></a>
+        </div>
+        <div class="github-badge">
+            <a href="https://www.flysnow.org/" target="_black"><span class="badge-subject">Design by</span><span class="badge-value bg-brightgreen">飞雪无情</span></a>
+        </div>
+        <div class="github-badge">
+            <a href="https://github.com/flysnow-org/maupassant-hugo" target="_black"><span class="badge-subject">Theme</span><span class="badge-value bg-yellowgreen">Maupassant</span></a>
+        </div>
+    </div>
+</footer>
+
+
+    
+    
+    <script type="text/javascript">
+        window.MathJax = {
+            tex2jax: {
+                inlineMath: [['$', '$']],
+                processEscapes: true
+                }
+            };
+    </script>
+    <script src='//cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.5/MathJax.js?config=TeX-MML-AM_CHTML' async></script>
+
+<a id="rocket" href="#top"></a>
+<script type="text/javascript" src='/js/totop.js?v=0.0.0' async=""></script>
+
+
+
+                </div>
+
+                <div id="secondary">
+    <section class="widget">
+        <form id="search" action='//www.google.com/search' method="get" accept-charset="utf-8" target="_blank" _lpchecked="1">
+      
+      <input type="text" name="q" maxlength="20" placeholder="Search">
+      <input type="hidden" name="sitesearch" value="http://jusonalien.github.com/">
+      <button type="submit" class="submit icon-search"></button>
+</form>
+    </section>
+    
+    <section class="widget">
+        <h3 class="widget-title">最近文章</h3>
+<ul class="widget-list">
+    
+</ul>
+    </section>
+
+    
+
+    <section class="widget">
+        <h3 class="widget-title"><a href='/categories/'>分类</a></h3>
+<ul class="widget-list">
+    
+</ul>
+    </section>
+
+    <section class="widget">
+        <h3 class="widget-title"><a href='/tags/'>标签</a></h3>
+<div class="tagcloud">
+    
+    <a href="http://jusonalien.github.com/tags/defi/">DeFi</a>
+    
+</div>
+    </section>
+
+    
+
+    <section class="widget">
+        <h3 class="widget-title">其它</h3>
+        <ul class="widget-list">
+            <li><a href="http://jusonalien.github.com/index.xml">文章 RSS</a></li>
+        </ul>
+    </section>
+</div>
+            </div>
+        </div>
+    </div>
+</body>
+
+</html>
