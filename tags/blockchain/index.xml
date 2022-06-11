@@ -2,17 +2,17 @@
 <rss version="2.0" xmlns:atom="http://www.w3.org/2005/Atom">
   <channel>
     <title>blockchain on jusonalien的博客</title>
-    <link>http://jusonalien.github.com/tags/blockchain/</link>
+    <link>http://jusonalien.github.io/tags/blockchain/</link>
     <description>Recent content in blockchain on jusonalien的博客</description>
     <generator>Hugo -- gohugo.io</generator>
     <language>en-us</language>
-    <lastBuildDate>Wed, 15 Dec 2021 23:23:03 +0000</lastBuildDate><atom:link href="http://jusonalien.github.com/tags/blockchain/index.xml" rel="self" type="application/rss+xml" />
+    <lastBuildDate>Wed, 15 Dec 2021 23:23:03 +0000</lastBuildDate><atom:link href="http://jusonalien.github.io/tags/blockchain/index.xml" rel="self" type="application/rss+xml" />
     <item>
       <title>共识概要</title>
-      <link>http://jusonalien.github.com/post/consensus-in-short/</link>
+      <link>http://jusonalien.github.io/post/consensus-in-short/</link>
       <pubDate>Wed, 15 Dec 2021 23:23:03 +0000</pubDate>
       
-      <guid>http://jusonalien.github.com/post/consensus-in-short/</guid>
+      <guid>http://jusonalien.github.io/post/consensus-in-short/</guid>
       <description>共识和一致性其实是等价的，两者概念都是希望某个提议只要能够在集群的节点中完成少数服从多数的应答，那么这个提议就算是被落实下来了，在完成这个应</description>
     </item>
     

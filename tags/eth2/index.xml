@@ -2,17 +2,17 @@
 <rss version="2.0" xmlns:atom="http://www.w3.org/2005/Atom">
   <channel>
     <title>eth2 on jusonalien的博客</title>
-    <link>http://jusonalien.github.com/tags/eth2/</link>
+    <link>http://jusonalien.github.io/tags/eth2/</link>
     <description>Recent content in eth2 on jusonalien的博客</description>
     <generator>Hugo -- gohugo.io</generator>
     <language>en-us</language>
-    <lastBuildDate>Sun, 26 Dec 2021 20:52:04 +0000</lastBuildDate><atom:link href="http://jusonalien.github.com/tags/eth2/index.xml" rel="self" type="application/rss+xml" />
+    <lastBuildDate>Sun, 26 Dec 2021 20:52:04 +0000</lastBuildDate><atom:link href="http://jusonalien.github.io/tags/eth2/index.xml" rel="self" type="application/rss+xml" />
     <item>
       <title>Casper-FFG论文阅读记录</title>
-      <link>http://jusonalien.github.com/post/eth2-cbc-ffg/</link>
+      <link>http://jusonalien.github.io/post/eth2-cbc-ffg/</link>
       <pubDate>Sun, 26 Dec 2021 20:52:04 +0000</pubDate>
       
-      <guid>http://jusonalien.github.com/post/eth2-cbc-ffg/</guid>
+      <guid>http://jusonalien.github.io/post/eth2-cbc-ffg/</guid>
       <description>Casper-FFG为ETH2的共识协议,具体的实现细节还是要最终参考eth2.0规范，但是阅读这个论文可以帮助大家系统性地认识eth2.0</description>
     </item>
     

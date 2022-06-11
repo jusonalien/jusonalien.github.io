@@ -2,89 +2,89 @@
 <rss version="2.0" xmlns:atom="http://www.w3.org/2005/Atom">
   <channel>
     <title>jusonalien的博客</title>
-    <link>http://jusonalien.github.com/</link>
+    <link>http://jusonalien.github.io/</link>
     <description>Recent content on jusonalien的博客</description>
     <generator>Hugo -- gohugo.io</generator>
     <language>en-us</language>
-    <lastBuildDate>Thu, 26 May 2022 10:23:03 +0000</lastBuildDate><atom:link href="http://jusonalien.github.com/index.xml" rel="self" type="application/rss+xml" />
+    <lastBuildDate>Thu, 26 May 2022 10:23:03 +0000</lastBuildDate><atom:link href="http://jusonalien.github.io/index.xml" rel="self" type="application/rss+xml" />
     <item>
       <title>HackerDao攻击分析&#43;复现</title>
-      <link>http://jusonalien.github.com/post/analysis-hackerdao-attack/</link>
+      <link>http://jusonalien.github.io/post/analysis-hackerdao-attack/</link>
       <pubDate>Thu, 26 May 2022 10:23:03 +0000</pubDate>
       
-      <guid>http://jusonalien.github.com/post/analysis-hackerdao-attack/</guid>
+      <guid>http://jusonalien.github.io/post/analysis-hackerdao-attack/</guid>
       <description>攻击者利用token合约自身的转账手续费的漏洞，结合dex的skim函数构造出dex LP的价格差，进而产生套利空间，将dex LP里面的WBN</description>
     </item>
     
     <item>
       <title>UniSwap-V2合约的数据解析入门</title>
-      <link>http://jusonalien.github.com/post/parse-data-on-bolock-chain/</link>
+      <link>http://jusonalien.github.io/post/parse-data-on-bolock-chain/</link>
       <pubDate>Wed, 27 Apr 2022 17:48:04 +0000</pubDate>
       
-      <guid>http://jusonalien.github.com/post/parse-data-on-bolock-chain/</guid>
+      <guid>http://jusonalien.github.io/post/parse-data-on-bolock-chain/</guid>
       <description>前阵子在兴趣驱使之下研究DeFi上的套利搬砖机器人的原理，过程有点坎坷，很多东西都只能靠自己去摸索踩坑出来，这篇文章用来记录一下关于链上智能</description>
     </item>
     
     <item>
       <title>Casper-FFG论文阅读记录</title>
-      <link>http://jusonalien.github.com/post/eth2-cbc-ffg/</link>
+      <link>http://jusonalien.github.io/post/eth2-cbc-ffg/</link>
       <pubDate>Sun, 26 Dec 2021 20:52:04 +0000</pubDate>
       
-      <guid>http://jusonalien.github.com/post/eth2-cbc-ffg/</guid>
+      <guid>http://jusonalien.github.io/post/eth2-cbc-ffg/</guid>
       <description>Casper-FFG为ETH2的共识协议,具体的实现细节还是要最终参考eth2.0规范，但是阅读这个论文可以帮助大家系统性地认识eth2.0</description>
     </item>
     
     <item>
       <title>pBFT为什么设计成这样？</title>
-      <link>http://jusonalien.github.com/post/pbft-in-deep/</link>
+      <link>http://jusonalien.github.io/post/pbft-in-deep/</link>
       <pubDate>Tue, 21 Dec 2021 23:01:03 +0000</pubDate>
       
-      <guid>http://jusonalien.github.com/post/pbft-in-deep/</guid>
+      <guid>http://jusonalien.github.io/post/pbft-in-deep/</guid>
       <description>前文 网上太多关于介绍pBFT这门古典艺术的文章，但大部分文章都是只是简单的介绍一下过程，没有对其中的原理（Why）做过介绍，其实最好的学习方</description>
     </item>
     
     <item>
       <title>共识概要</title>
-      <link>http://jusonalien.github.com/post/consensus-in-short/</link>
+      <link>http://jusonalien.github.io/post/consensus-in-short/</link>
       <pubDate>Wed, 15 Dec 2021 23:23:03 +0000</pubDate>
       
-      <guid>http://jusonalien.github.com/post/consensus-in-short/</guid>
+      <guid>http://jusonalien.github.io/post/consensus-in-short/</guid>
       <description>共识和一致性其实是等价的，两者概念都是希望某个提议只要能够在集群的节点中完成少数服从多数的应答，那么这个提议就算是被落实下来了，在完成这个应</description>
     </item>
     
     <item>
       <title>深入了解POS</title>
-      <link>http://jusonalien.github.com/post/pos-indeep/</link>
+      <link>http://jusonalien.github.io/post/pos-indeep/</link>
       <pubDate>Wed, 15 Dec 2021 11:55:09 +0000</pubDate>
       
-      <guid>http://jusonalien.github.com/post/pos-indeep/</guid>
+      <guid>http://jusonalien.github.io/post/pos-indeep/</guid>
       <description>在POW对共识机制针对那些解决特定密码学问题的参与者给予奖励，以此授予验证交易和创建区块的权限，而在POS的场景下，validators都会</description>
     </item>
     
     <item>
       <title>动态多叉merkle-tree的实现 </title>
-      <link>http://jusonalien.github.com/post/dynamic-merkle/</link>
+      <link>http://jusonalien.github.io/post/dynamic-merkle/</link>
       <pubDate>Thu, 18 Nov 2021 23:23:03 +0000</pubDate>
       
-      <guid>http://jusonalien.github.com/post/dynamic-merkle/</guid>
+      <guid>http://jusonalien.github.io/post/dynamic-merkle/</guid>
       <description>背景 我们常见的merkle-tree通常都是二叉树的结构，被经常用在一些如ipfs，p2p下载，blockchain等分布式去中心化的场景之</description>
     </item>
     
     <item>
       <title>Archives</title>
-      <link>http://jusonalien.github.com/archives/</link>
+      <link>http://jusonalien.github.io/archives/</link>
       <pubDate>Mon, 01 Jan 0001 00:00:00 +0000</pubDate>
       
-      <guid>http://jusonalien.github.com/archives/</guid>
+      <guid>http://jusonalien.github.io/archives/</guid>
       <description></description>
     </item>
     
     <item>
       <title>关于</title>
-      <link>http://jusonalien.github.com/about/</link>
+      <link>http://jusonalien.github.io/about/</link>
       <pubDate>Mon, 01 Jan 0001 00:00:00 +0000</pubDate>
       
-      <guid>http://jusonalien.github.com/about/</guid>
+      <guid>http://jusonalien.github.io/about/</guid>
       <description>最近在研究DeFi，zk-SNARKs等等跟区块链相关的任何东西</description>
     </item>
     
