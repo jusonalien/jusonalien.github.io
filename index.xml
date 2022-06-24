@@ -6,7 +6,16 @@
     <description>Recent content on jusonalien的博客</description>
     <generator>Hugo -- gohugo.io</generator>
     <language>en-us</language>
-    <lastBuildDate>Thu, 26 May 2022 10:23:03 +0000</lastBuildDate><atom:link href="http://jusonalien.github.io/index.xml" rel="self" type="application/rss+xml" />
+    <lastBuildDate>Fri, 24 Jun 2022 11:23:03 +0800</lastBuildDate><atom:link href="http://jusonalien.github.io/index.xml" rel="self" type="application/rss+xml" />
+    <item>
+      <title>Aave-V2 gas优化策略学习</title>
+      <link>http://jusonalien.github.io/post/aave-v2-gas-optimize/</link>
+      <pubDate>Fri, 24 Jun 2022 11:23:03 +0800</pubDate>
+      
+      <guid>http://jusonalien.github.io/post/aave-v2-gas-optimize/</guid>
+      <description>在翻阅Aave-V2的白皮书的时候，有一章节在讲gas优化的，其中的一些思路值得效仿学习一下 幂运算优化 在借贷系统中，很多场景涉及到复利率低计</description>
+    </item>
+    
     <item>
       <title>HackerDao攻击分析&#43;复现</title>
       <link>http://jusonalien.github.io/post/analysis-hackerdao-attack/</link>
@@ -46,7 +55,7 @@
     <item>
       <title>共识概要</title>
       <link>http://jusonalien.github.io/post/consensus-in-short/</link>
-      <pubDate>Wed, 15 Dec 2021 23:23:03 +0000</pubDate>
+      <pubDate>Wed, 15 Dec 2021 23:23:03 +0800</pubDate>
       
       <guid>http://jusonalien.github.io/post/consensus-in-short/</guid>
       <description>共识和一致性其实是等价的，两者概念都是希望某个提议只要能够在集群的节点中完成少数服从多数的应答，那么这个提议就算是被落实下来了，在完成这个应</description>
@@ -64,7 +73,7 @@
     <item>
       <title>动态多叉merkle-tree的实现 </title>
       <link>http://jusonalien.github.io/post/dynamic-merkle/</link>
-      <pubDate>Thu, 18 Nov 2021 23:23:03 +0000</pubDate>
+      <pubDate>Thu, 18 Nov 2021 23:23:03 +0800</pubDate>
       
       <guid>http://jusonalien.github.io/post/dynamic-merkle/</guid>
       <description>背景 我们常见的merkle-tree通常都是二叉树的结构，被经常用在一些如ipfs，p2p下载，blockchain等分布式去中心化的场景之</description>
@@ -85,7 +94,7 @@
       <pubDate>Mon, 01 Jan 0001 00:00:00 +0000</pubDate>
       
       <guid>http://jusonalien.github.io/about/</guid>
-      <description>最近在研究NFT,DeFi，zk-SNARKs等等
+      <description>最近在研究DeFi，zk-SNARKs等等
 Links:
 Github: https://github.com/jusonalien Twitter: https://twitter.com/web3researcher </description>
     </item>
