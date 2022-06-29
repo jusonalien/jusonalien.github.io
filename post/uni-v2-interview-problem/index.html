@@ -7,20 +7,20 @@
     <meta name="viewport" content="width=device-width, initial-scale=1">
     
 
-    <title>Aave-V2 gas优化策略学习 | jusonalien的博客</title>
-    <meta property="og:title" content="Aave-V2 gas优化策略学习 - jusonalien的博客">
+    <title>一道Uni V2的组LP题目分享 | jusonalien的博客</title>
+    <meta property="og:title" content="一道Uni V2的组LP题目分享 - jusonalien的博客">
     <meta property="og:type" content="article">
         
-    <meta property="article:published_time" content='2022-06-24T11:23:03&#43;08:00'>
+    <meta property="article:published_time" content='2022-06-29T15:14:03&#43;08:00'>
         
         
-    <meta property="article:modified_time" content='2022-06-24T11:23:03&#43;08:00'>
+    <meta property="article:modified_time" content='2022-06-29T15:14:03&#43;08:00'>
         
     <meta name="Keywords" content="">
-    <meta name="description" content="Aave-V2 gas优化策略学习">
+    <meta name="description" content="一道Uni V2的组LP题目分享">
         
     <meta name="author" content="">
-    <meta property="og:url" content="http://jusonalien.github.io/post/aave-v2-gas-optimize/">
+    <meta property="og:url" content="http://jusonalien.github.io/post/uni-v2-interview-problem/">
     <link rel="shortcut icon" href='/favicon.ico'  type="image/x-icon">
 
     <link rel="stylesheet" href='/css/normalize.css'>
@@ -134,16 +134,8 @@
     <div class="post-toc-content">
         <nav id="TableOfContents">
   <ul>
-    <li><a href="#幂运算优化">幂运算优化</a></li>
-    <li><a href="#移除对safemath的引用">移除对SafeMath的引用</a></li>
-    <li><a href="#bitmask的使用">BitMask的使用</a>
-      <ul>
-        <li><a href="#用户的借贷信息存储">用户的借贷信息存储</a></li>
-        <li><a href="#配置管理">配置管理</a></li>
-      </ul>
-    </li>
-    <li><a href="#总结">总结</a></li>
-    <li><a href="#参考">参考</a></li>
+    <li><a href="#背景">背景</a></li>
+    <li><a href="#题目分析">题目分析</a></li>
   </ul>
 </nav>
     </div>
@@ -181,10 +173,10 @@
 </script>
     <article class="post">
         <header>
-            <h1 class="post-title">Aave-V2 gas优化策略学习</h1>
+            <h1 class="post-title">一道Uni V2的组LP题目分享</h1>
         </header>
         <date class="post-meta meta-date">
-            2022年6月24日
+            2022年6月29日
         </date>
         
         
@@ -196,66 +188,46 @@
         </div>
         
         <div class="post-content">
-            <p>在翻阅Aave-V2的白皮书的时候，有一章节在讲gas优化的，其中的一些思路值得效仿学习一下</p>
-<h2 id="幂运算优化">幂运算优化</h2>
-<p>在借贷系统中，很多场景涉及到复利率低计算功能，由于这是个幂运算的过程，如果幂数过大会导致计算的迭代次数变多，会增加gas的消耗和性能的降低，在通过对复利公式做二项式展开得到如下公司</p>
+            <h2 id="背景">背景</h2>
+<p>群里大佬出了一道据说是Web3的面试题目</p>
+<p>一个uni v2交易对 项目方冲入了 100ETH和10000 Token，获得1000枚LP。现在老哥手里有10个ETH，想all in做市，请问他该换多少个eth为token去搭配lp（手续费不计）</p>
+<h2 id="题目分析">题目分析</h2>
+<p>这道题主要考察Uni V2的两个知识点</p>
+<p>1、AMM的数学模型，做交易的时候LP上的两种资产的数值要保持乘积不变</p>
+<p>2、组LP的逻辑，组LP的时候两类资产需要与当前LP上的比例保持一致，组完后常数K会做一次更新</p>
+<p>变量描述</p>
+<p>T : Token  10000</p>
+<p>E : Eth 100</p>
+<p>A: 老哥手头上的初始Eth 10</p>
 <p>$$
-(1+x)^α =1+αx+ \frac{1}{2}α(α−1)x^2 + \frac{1}{6}α(α−1)(α−2)x^3 + \frac{1}{24}α(α−1)(α−2)(α−3)x^4 +&hellip;
+T*E=K (T=10000, E=100)
 $$</p>
-<p>会发现，只要<strong>保留前三阶项的展开</strong>就能满足5年以内的复利率精度</p>
-<p>因此我们要计算的的项只有如下</p>
+<p>用手头的Eth兑换出T</p>
 <p>$$
-(1+x)^α
-\approx 1+αx+ \frac{1}{2}α(α−1)x^2 + \frac{1}{6}α(α−1)(α−2)x^3
+1、(T-\Delta{T})*(E + \Delta{E}) = K<br>
 $$</p>
-<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-solidity" data-lang="solidity"><span style="display:flex;"><span><span style="color:#66d9ef">function</span> <span style="color:#a6e22e">calculateCompoundedInterest</span>(
-</span></span><span style="display:flex;"><span>    <span style="color:#66d9ef">uint256</span> rate, <span style="color:#75715e">// 年化利率
-</span></span></span><span style="display:flex;"><span><span style="color:#75715e"></span>    <span style="color:#66d9ef">uint40</span> lastUpdateTimestamp, <span style="color:#75715e">// 利率计算开始时间
-</span></span></span><span style="display:flex;"><span><span style="color:#75715e"></span>    <span style="color:#66d9ef">uint256</span> currentTimestamp <span style="color:#75715e">// 当前时间
-</span></span></span><span style="display:flex;"><span><span style="color:#75715e"></span>  ) <span style="color:#66d9ef">internal</span> <span style="color:#66d9ef">pure</span> <span style="color:#66d9ef">returns</span> (<span style="color:#66d9ef">uint256</span>) {
-</span></span><span style="display:flex;"><span>    <span style="color:#75715e">//solium-disable-next-line
-</span></span></span><span style="display:flex;"><span><span style="color:#75715e"></span>    <span style="color:#66d9ef">uint256</span> exp <span style="color:#f92672">=</span> currentTimestamp.sub(<span style="color:#66d9ef">uint256</span>(lastUpdateTimestamp));
-</span></span><span style="display:flex;"><span>
-</span></span><span style="display:flex;"><span>    <span style="color:#66d9ef">if</span> (exp <span style="color:#f92672">==</span> <span style="color:#ae81ff">0</span>) { <span style="color:#75715e">// 时间间隔为0，利息不变就是1
-</span></span></span><span style="display:flex;"><span><span style="color:#75715e"></span>      <span style="color:#66d9ef">return</span> WadRayMath.ray();
-</span></span><span style="display:flex;"><span>    }
-</span></span><span style="display:flex;"><span>
-</span></span><span style="display:flex;"><span>    <span style="color:#66d9ef">uint256</span> expMinusOne <span style="color:#f92672">=</span> exp <span style="color:#f92672">-</span> <span style="color:#ae81ff">1</span>;
-</span></span><span style="display:flex;"><span>
-</span></span><span style="display:flex;"><span>    <span style="color:#66d9ef">uint256</span> expMinusTwo <span style="color:#f92672">=</span> exp <span style="color:#f92672">&gt;</span> <span style="color:#ae81ff">2</span> <span style="color:#f92672">?</span> exp <span style="color:#f92672">-</span> <span style="color:#ae81ff">2</span> <span style="color:#f92672">:</span> <span style="color:#ae81ff">0</span>;
-</span></span><span style="display:flex;"><span>
-</span></span><span style="display:flex;"><span>    <span style="color:#66d9ef">uint256</span> ratePerSecond <span style="color:#f92672">=</span> rate <span style="color:#f92672">/</span> SECONDS_PER_YEAR; <span style="color:#75715e">// 年化利率除一年的秒数
-</span></span></span><span style="display:flex;"><span><span style="color:#75715e"></span>
-</span></span><span style="display:flex;"><span>    <span style="color:#66d9ef">uint256</span> basePowerTwo <span style="color:#f92672">=</span> ratePerSecond.rayMul(ratePerSecond);
-</span></span><span style="display:flex;"><span>    <span style="color:#66d9ef">uint256</span> basePowerThree <span style="color:#f92672">=</span> basePowerTwo.rayMul(ratePerSecond);
-</span></span><span style="display:flex;"><span>
-</span></span><span style="display:flex;"><span>    <span style="color:#66d9ef">uint256</span> secondTerm <span style="color:#f92672">=</span> exp.mul(expMinusOne).mul(basePowerTwo) <span style="color:#f92672">/</span> <span style="color:#ae81ff">2</span>;
-</span></span><span style="display:flex;"><span>    <span style="color:#66d9ef">uint256</span> thirdTerm <span style="color:#f92672">=</span> exp.mul(expMinusOne).mul(expMinusTwo).mul(basePowerThree) <span style="color:#f92672">/</span> <span style="color:#ae81ff">6</span>;
-</span></span><span style="display:flex;"><span>
-</span></span><span style="display:flex;"><span>    <span style="color:#66d9ef">return</span> WadRayMath.ray().add(ratePerSecond.mul(exp)).add(secondTerm).add(thirdTerm);
-</span></span><span style="display:flex;"><span>  }
-</span></span></code></pre></div><h2 id="移除对safemath的引用">移除对SafeMath的引用</h2>
-<p>之前的V1版本直接用了OppenZeeplin的SafeMath，导致在做大量的数学运算的时候额外增加了不必要的消耗，V2的版本改成了直接自己在代码库内实现相关的安全数学操作</p>
-<h2 id="bitmask的使用">BitMask的使用</h2>
-<h3 id="用户的借贷信息存储">用户的借贷信息存储</h3>
-<p>使用一个256Bit的整数，两两Bit成一对，每一对代表对应的资产，第一个Bit用来表示用户是否用该资产来做抵押物，第二个Bit表示用户是否借用该资产</p>
-<p>
-        <img class="mx-auto" alt="Untitled" src="/images/AAVE-v2-user-borrow-bitmask.png" />   
-    </p>
-<p>在V1的版本中是用了List来存放用户的相关信息，相关的操作会比较消耗gas</p>
-<h3 id="配置管理">配置管理</h3>
-<p>一些配置只涉及二元逻辑的，实用bitmask来管理，不仅节省gas，在针对多个配置操作的时候还能支持并发的操作</p>
-<p>
-        <img class="mx-auto" alt="AAVE-v2-reserve-bitmask" src="/images/AAVE-v2-reserve-bitmask.png" />   
-    </p>
-<h2 id="总结">总结</h2>
-<p>优化都是要经过深度的分析之后才有必要去做，不然都是费时费力不讨好的事情</p>
-<ul>
-<li>部分优化其实都是迫于当前solidity编译器不是很智能而去做的，比如 SafeMath的引用优化这块</li>
-<li>针对智能合约的场景，当用户体量大了之后，gas的优化会变得尤其重要</li>
-</ul>
-<h2 id="参考">参考</h2>
-<p><a href="https://github.com/aave/protocol-v2/blob/master/aave-v2-whitepaper.pdf">https://github.com/aave/protocol-v2/blob/master/aave-v2-whitepaper.pdf</a></p>
+<p>将获得的 $\Delta{T}$  跟剩余的 $A-\Delta{E}$ 去增加流动性做市，得到第二个方程，其中$0&lt;\Delta{E} &lt; A$</p>
+<p>$$
+2、\Delta{T}/(A-\Delta{E}) = (T-\Delta{T})/(E + \Delta{E})
+$$</p>
+<p>通过公式1、2消元获得一元二次方程：</p>
+<p>$$
+\Delta{E}^2+101\Delta{E}-1000=0 (0&lt;\Delta{E} &lt; A)
+$$</p>
+<p>对其求解得到$\Delta{E}$存在两个解分别为<strong>4.8809</strong>和110.084(舍弃)</p>
+<p>$$
+\Delta{E} = 4.8809, \Delta{T}=465.3754
+$$</p>
+<p>所以最终用手头上的<strong>4.8809</strong>个Eth换取 <strong>465.3754</strong>个Token，将剩下的<strong>5.1191</strong>个Eth和获取的Token组LP</p>
+<p>原题目是不考虑手续费的版本，那如果考虑手续费呢，我们假设手续费率为$\beta{}$,在第一步兑换的时候需要将手续费考虑进去，因为手续费是不纳入到LP里面做流动性的，得到方程3</p>
+<p>$$
+3、(T-\Delta{T})<em>(E + \Delta{E}</em> (1-\beta{})) = K
+$$</p>
+<p>在将剩余的Eth和获得的Token拿去组LP，就得到方程4</p>
+<p>$$
+4、\Delta{T}/(A-\Delta{E}) = (T-\Delta{T})/(E + \Delta{E}* (1-\beta{}))
+$$</p>
+<p>解法与上面的类似，就不做重复计算了，留给读者去练习一下。</p>
 
         </div>
 
@@ -264,23 +236,14 @@ $$</p>
 
         
 
-<div class="post-archive">
-    <h2>See Also</h2>
-    <ul class="listing">
-        
-        <li><a href="/post/analysis-hackerdao-attack/">HackerDao攻击分析&#43;复现</a></li>
-        
-    </ul>
-</div>
-
 
         <div class="post-meta meta-tags">
             
             <ul class="clearfix">
                 
-                <li><a href='/tags/defi'>DeFi</a></li>
+                <li><a href='/tags/uniswap'>Uniswap</a></li>
                 
-                <li><a href='/tags/aave'>Aave</a></li>
+                <li><a href='/tags/defi'>Defi</a></li>
                 
             </ul>
             
