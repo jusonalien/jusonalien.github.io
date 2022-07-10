@@ -1,0 +1,565 @@
+<!doctype html>
+<html lang="en-us">
+<head>
+
+    <meta charset="utf-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    
+
+    <title>Uniswap-V3的流动性挖矿原理介绍 | jusonalien的博客</title>
+    <meta property="og:title" content="Uniswap-V3的流动性挖矿原理介绍 - jusonalien的博客">
+    <meta property="og:type" content="article">
+        
+    <meta property="article:published_time" content='2022-07-10T20:14:03&#43;08:00'>
+        
+        
+    <meta property="article:modified_time" content='2022-07-10T20:14:03&#43;08:00'>
+        
+    <meta name="Keywords" content="">
+    <meta name="description" content="Uniswap-V3的流动性挖矿原理介绍">
+        
+    <meta name="author" content="">
+    <meta property="og:url" content="http://jusonalien.github.io/post/uniswap-v3-liquidity-mining-analysis/">
+    <link rel="shortcut icon" href='/favicon.ico'  type="image/x-icon">
+
+    <link rel="stylesheet" href='/css/normalize.css'>
+    <link rel="stylesheet" href='/css/style.css'>
+    <script type="text/javascript" src="//cdn.bootcdn.net/ajax/libs/jquery/3.4.1/jquery.min.js"></script>
+
+    
+    
+    
+    
+    
+    
+</head>
+
+<body>
+    <header id="header" class="clearfix">
+    <div class="container">
+        <div class="col-group">
+            <div class="site-name ">
+                
+                    <a id="logo" href="http://jusonalien.github.io/">
+                        jusonalien的博客
+                    </a>
+                
+                
+            </div>
+            <div>
+                <nav id="nav-menu" class="clearfix">
+                    <a class="current" href="http://jusonalien.github.io/">首页</a>
+                    
+                    <a  href="http://jusonalien.github.io/archives/" title="归档">归档</a>
+                    
+                    <a  href="http://jusonalien.github.io/about/" title="关于">关于</a>
+                    
+                </nav>
+            </div>
+        </div>
+    </div>
+</header>
+
+    <div id="body">
+        <div class="container">
+            <div class="col-group">
+
+                <div class="col-8" id="main">
+                    
+<div class="res-cons">
+    <style type="text/css">
+    .post-toc {
+        position: fixed;
+        width: 200px;
+        margin-left: -210px;
+        padding: 5px 10px;
+        font-family: Athelas, STHeiti, Microsoft Yahei, serif;
+        font-size: 12px;
+        border: 1px solid rgba(0, 0, 0, .07);
+        border-radius: 5px;
+        background-color: rgba(255, 255, 255, 0.98);
+        background-clip: padding-box;
+        -webkit-box-shadow: 1px 1px 2px rgba(0, 0, 0, .125);
+        box-shadow: 1px 1px 2px rgba(0, 0, 0, .125);
+        word-wrap: break-word;
+        white-space: nowrap;
+        -webkit-box-sizing: border-box;
+        box-sizing: border-box;
+        z-index: 999;
+        cursor: pointer;
+        max-height: 70%;
+        overflow-y: auto;
+        overflow-x: hidden;
+    }
+
+    .post-toc .post-toc-title {
+        width: 100%;
+        margin: 0 auto;
+        font-size: 20px;
+        font-weight: 400;
+        text-transform: uppercase;
+        text-align: center;
+    }
+
+    .post-toc .post-toc-content {
+        font-size: 15px;
+    }
+
+    .post-toc .post-toc-content>nav>ul {
+        margin: 10px 0;
+    }
+
+    .post-toc .post-toc-content ul {
+        padding-left: 20px;
+        list-style: square;
+        margin: 0.5em;
+        line-height: 1.8em;
+    }
+
+    .post-toc .post-toc-content ul ul {
+        padding-left: 15px;
+        display: none;
+    }
+
+    @media print,
+    screen and (max-width:1057px) {
+        .post-toc {
+            display: none;
+        }
+    }
+</style>
+<div class="post-toc" style="position: absolute; top: 188px;">
+    <h2 class="post-toc-title">文章目录</h2>
+    <div class="post-toc-content">
+        <nav id="TableOfContents">
+  <ul>
+    <li><a href="#v2时代的挖矿收益计算模型">V2时代的挖矿收益计算模型</a></li>
+    <li><a href="#回到v3的挖矿模型中">回到V3的挖矿模型中</a></li>
+    <li><a href="#参考">参考</a></li>
+  </ul>
+</nav>
+    </div>
+</div>
+<script type="text/javascript">
+    $(document).ready(function () {
+        var postToc = $(".post-toc");
+        if (postToc.length) {
+            var leftPos = $("#main").offset().left;
+            if (leftPos < 220) {
+                postToc.css({ "width": leftPos - 10, "margin-left": (0 - leftPos) })
+            }
+
+            var t = postToc.offset().top - 20,
+                a = {
+                    start: {
+                        position: "absolute",
+                        top: t
+                    },
+                    process: {
+                        position: "fixed",
+                        top: 20
+                    },
+                };
+            $(window).scroll(function () {
+                var e = $(window).scrollTop();
+                e < t ? postToc.css(a.start) : postToc.css(a.process)
+            })
+        }
+
+        if ($("#TableOfContents").children().length < 1) {
+            $(".post-toc").remove();
+        }
+    })
+</script>
+    <article class="post">
+        <header>
+            <h1 class="post-title">Uniswap-V3的流动性挖矿原理介绍</h1>
+        </header>
+        <date class="post-meta meta-date">
+            2022年7月10日
+        </date>
+        
+        
+        
+        <div class="clear" style="display: none">
+            <div class="toc-article">
+                <div class="toc-title">文章目录</div>
+            </div>
+        </div>
+        
+        <div class="post-content">
+            <p>这里是基于阅读<a href="https://www.paradigm.xyz/2021/05/liquidity-mining-on-uniswap-v3">参考文章后</a>的笔记记录，中间增加了一些自己结合源码+部分细节的推敲</p>
+<p>为了能够提升协议的资金利用率，Uniswap-V3在流动性管理这块允许用户在提供流动性的时候指定特定的价格区间，这一特性同时也导致了基于用户头寸衍生的一些业务场景的计算模型无法复用V2时代的计算模型。</p>
+<h2 id="v2时代的挖矿收益计算模型">V2时代的挖矿收益计算模型</h2>
+<p>我们先回顾一下V2时代的流动性挖矿收益计算模型，</p>
+<p>我们先取</p>
+<ul>
+<li>$R$ 为每秒钟的发放收益，</li>
+<li>$l(t)$ 是在 $t$ 时刻，某用户提供的流动性的总价值</li>
+<li>$L(t)$ 是在 $t$ 时刻，所质押的流动性的总价值</li>
+</ul>
+<p>那么该用户在 $t$ 时刻所收到的质押收益是 $R \cdot \frac{l(t)}{L(t)}$</p>
+<p>用户在$t_0$ 到 $t_1$ 的这段时间，他所收到的质押收益是</p>
+<p>$$
+\sum_{t=t_0}^{t1} {R \cdot \frac{l(t)}{L(t)}}
+$$</p>
+<p>这公式在链下的环境去计算很简单，但是如果放到链上，就会很耗gas，因此需要对其进行优化</p>
+<p>如果用户全程都只质押了 $l$ 这么多的资产，上面的公式可以提炼成</p>
+<p>$$
+R \cdot l \cdot \sum_{t=t_0}^{t1} {\frac{1}{L(t)}}
+$$</p>
+<p>那么用户在 $t_0$ 到  $t_1$ 这段时间的收益计算公式转换成：</p>
+<p>$$
+R \cdot l \cdot (\sum_{t=0}^{t0} {\frac{1}{L(t)}}-\sum_{t=0}^{t1} {\frac{1}{L(t)}})
+$$</p>
+<p>我们令到</p>
+<p>$$
+S_l(t_i)=\sum_{t=0}^{t_i} {\frac{1}{L(t)}}
+$$</p>
+<p>每当有用户触发质押和提取的操作的时候，触发更新一下对应的 $S_l$ 的值，注意，这里涉及到两个变量的维护，</p>
+<p>最终变成质押收益计算公式，从每次计算都要循环迭代加乘触计算变成每次只要做一次减法计算</p>
+<p>$$
+R(l,S_l(t_1),S_l(t_0)) = R \cdot l \cdot (S_l(t_1) - S_l(t_0))
+$$</p>
+<p>我们取用户在 $t_1$ 增加了$\Delta{L}$  的流动性到池子里面</p>
+<p>先更新</p>
+<p>$$
+S_l(t_1)=\sum_{t=0}^{t_0} {\frac{1}{L(t)}} + \frac{t_1-t_0}{L(t_0)}<br>
+$$</p>
+<p>然后再更新</p>
+<p>$$
+L(t_1) = L(t_0) + \Delta{L}
+$$</p>
+<p>当用户在 $t_2$ 的时刻提取出流动性的时候</p>
+<p>先更新</p>
+<p>$$
+S_l(t_2)=\sum_{t=0}^{t_1} {\frac{1}{L(t)}} + \frac{t_2-t_1}{L(t_1)}<br>
+$$</p>
+<p>然后再更新</p>
+<p>$$
+L(t_2) = L(t_1) - \Delta{L}
+$$</p>
+<p>此时用户的收益情况是</p>
+<p>$$
+R \cdot l \cdot \frac{t_2-t_1}{L(t_1)}<br>
+$$</p>
+<h2 id="回到v3的挖矿模型中">回到V3的挖矿模型中</h2>
+<p>既然用户在提供流动性的时候就指定了只在价格区间提供流动性，那么影响用户的质押收益的因子就不仅仅跟时间有关，还跟资产的价格有关，如果资产的价格超过或低于对应价格区间，那么用户就不再享有对应的收益</p>
+<p>我们这里取用户在提供流动性的时候，对应的价格范围是</p>
+<p>$$
+i_{lower} \le i_c \le i_{upper}
+$$</p>
+<p>$$
+R \cdot l \cdot \sum_{t=t_1}^{t_2}\left{\begin{aligned}\frac{1}{L(t)} &amp;&amp; i_{lower} \le i_c \le i_{upper}\ 0 &amp;&amp; i_{upper} \le i_c \0 &amp;&amp; i_c \le i_{lower} \end{aligned}\right.
+$$</p>
+<p>可以整合成</p>
+<p>$$
+R \cdot l \cdot ((\sum_{t=t_1}^{t_2} {\frac{1}{L(t)}})-(\sum_{t=t_1}^{t_2}\left{\begin{aligned}\frac{1}{L(t)} &amp;&amp;  i_c \lt i_{lower}\ 0 &amp;&amp; i_{c} \ge i_{lower} \end{aligned}\right.)-(\sum_{t=t_1}^{t_2}\left{\begin{aligned}\frac{1}{L(t)} &amp;&amp;  i_c \ge i_{upper}\ 0 &amp;&amp; i_{c} \lt i_{upper} \end{aligned}\right.))
+$$</p>
+<p>在做这个计算的时候，会用到一些很tricky的技巧，这些技巧都参考甚至直接复用了Uniswap-V3计算手续费的方案</p>
+<p>可以观察到，下面的方程其实Uniswap-V3里面有直接的函数可以直接调用求得某个时刻的数值</p>
+<p>$$
+((\sum_{t=t_1}^{t_2} {\frac{1}{L(t)}})-(\sum_{t=t_1}^{t_2}\left{\begin{aligned}\frac{1}{L(t)} &amp;&amp;  i_c \lt i_{lower}\ 0 &amp;&amp; i_{c} \ge i_{lower} \end{aligned}\right.)-(\sum_{t=t_1}^{t_2}\left{\begin{aligned}\frac{1}{L(t)} &amp;&amp;  i_c \ge i_{upper}\ 0 &amp;&amp; i_{c} \lt i_{upper} \end{aligned}\right.))
+$$</p>
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-solidity" data-lang="solidity"><span style="display:flex;"><span><span style="color:#75715e">//https://github.com/Uniswap/v3-core/blob/main/contracts/UniswapV3Pool.sol#L158
+</span></span></span><span style="display:flex;"><span><span style="color:#75715e"></span><span style="color:#66d9ef">function</span> <span style="color:#a6e22e">snapshotCumulativesInside</span>(<span style="color:#66d9ef">int24</span> tickLower, <span style="color:#66d9ef">int24</span> tickUpper)
+</span></span><span style="display:flex;"><span>        <span style="color:#66d9ef">external</span>
+</span></span><span style="display:flex;"><span>        <span style="color:#66d9ef">view</span>
+</span></span><span style="display:flex;"><span>        <span style="color:#66d9ef">override</span>
+</span></span><span style="display:flex;"><span>        noDelegateCall
+</span></span><span style="display:flex;"><span>        <span style="color:#66d9ef">returns</span> (
+</span></span><span style="display:flex;"><span>            <span style="color:#66d9ef">int56</span> tickCumulativeInside,
+</span></span><span style="display:flex;"><span>            <span style="color:#66d9ef">uint160</span> secondsPerLiquidityInsideX128,
+</span></span><span style="display:flex;"><span>            <span style="color:#66d9ef">uint32</span> secondsInside
+</span></span><span style="display:flex;"><span>        )
+</span></span></code></pre></div><p>在用户stake也就是t1的时候跑一次，保留当前值，然后在计算收益的时候t2再跑一次，保留当前值，两次值相减即可得</p>
+<p>我们来看看V3官方的质押挖矿代码里面计算收益的逻辑</p>
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-solidity" data-lang="solidity"><span style="display:flex;"><span><span style="color:#75715e">// https://github.com/Uniswap/v3-staker/blob/main/contracts/UniswapV3Staker.sol#L280
+</span></span></span><span style="display:flex;"><span><span style="color:#75715e"></span>
+</span></span><span style="display:flex;"><span><span style="color:#66d9ef">function</span> <span style="color:#a6e22e">getRewardInfo</span>(IncentiveKey <span style="color:#66d9ef">memory</span> key, <span style="color:#66d9ef">uint256</span> tokenId)
+</span></span><span style="display:flex;"><span>        <span style="color:#66d9ef">external</span>
+</span></span><span style="display:flex;"><span>        <span style="color:#66d9ef">view</span>
+</span></span><span style="display:flex;"><span>        <span style="color:#66d9ef">override</span>
+</span></span><span style="display:flex;"><span>        <span style="color:#66d9ef">returns</span> (<span style="color:#66d9ef">uint256</span> reward, <span style="color:#66d9ef">uint160</span> secondsInsideX128)
+</span></span><span style="display:flex;"><span>    {
+</span></span><span style="display:flex;"><span>        <span style="color:#66d9ef">bytes32</span> incentiveId <span style="color:#f92672">=</span> IncentiveId.compute(key);
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span>        (<span style="color:#66d9ef">uint160</span> secondsPerLiquidityInsideInitialX128, <span style="color:#66d9ef">uint128</span> liquidity) <span style="color:#f92672">=</span> stakes(tokenId, incentiveId);
+</span></span><span style="display:flex;"><span>        require(liquidity <span style="color:#f92672">&gt;</span> <span style="color:#ae81ff">0</span>, <span style="color:#e6db74">&#39;UniswapV3Staker::getRewardInfo: stake does not exist&#39;</span>);
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span>        Deposit <span style="color:#66d9ef">memory</span> deposit <span style="color:#f92672">=</span> deposits[tokenId];
+</span></span><span style="display:flex;"><span>        Incentive <span style="color:#66d9ef">memory</span> incentive <span style="color:#f92672">=</span> incentives[incentiveId];
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span>        (, <span style="color:#66d9ef">uint160</span> secondsPerLiquidityInsideX128, ) <span style="color:#f92672">=</span>
+</span></span><span style="display:flex;"><span>            key.pool.snapshotCumulativesInside(deposit.tickLower, deposit.tickUpper);
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span>        (reward, secondsInsideX128) <span style="color:#f92672">=</span> RewardMath.computeRewardAmount(
+</span></span><span style="display:flex;"><span>            incentive.totalRewardUnclaimed,
+</span></span><span style="display:flex;"><span>            incentive.totalSecondsClaimedX128,
+</span></span><span style="display:flex;"><span>            key.startTime,
+</span></span><span style="display:flex;"><span>            key.endTime,
+</span></span><span style="display:flex;"><span>            liquidity,
+</span></span><span style="display:flex;"><span>            secondsPerLiquidityInsideInitialX128,
+</span></span><span style="display:flex;"><span>            secondsPerLiquidityInsideX128,
+</span></span><span style="display:flex;"><span>            block.timestamp
+</span></span><span style="display:flex;"><span>        );
+</span></span><span style="display:flex;"><span>    }
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span><span style="color:#75715e">// https://github.com/Uniswap/v3-staker/blob/main/contracts/libraries/RewardMath.sol#L21
+</span></span></span><span style="display:flex;"><span><span style="color:#75715e"></span>
+</span></span><span style="display:flex;"><span><span style="color:#66d9ef">function</span> <span style="color:#a6e22e">computeRewardAmount</span>(
+</span></span><span style="display:flex;"><span>        <span style="color:#66d9ef">uint256</span> totalRewardUnclaimed,
+</span></span><span style="display:flex;"><span>        <span style="color:#66d9ef">uint160</span> totalSecondsClaimedX128,
+</span></span><span style="display:flex;"><span>        <span style="color:#66d9ef">uint256</span> startTime,
+</span></span><span style="display:flex;"><span>        <span style="color:#66d9ef">uint256</span> endTime,
+</span></span><span style="display:flex;"><span>        <span style="color:#66d9ef">uint128</span> liquidity,
+</span></span><span style="display:flex;"><span>        <span style="color:#66d9ef">uint160</span> secondsPerLiquidityInsideInitialX128,
+</span></span><span style="display:flex;"><span>        <span style="color:#66d9ef">uint160</span> secondsPerLiquidityInsideX128,
+</span></span><span style="display:flex;"><span>        <span style="color:#66d9ef">uint256</span> currentTime
+</span></span><span style="display:flex;"><span>    ) <span style="color:#66d9ef">internal</span> <span style="color:#66d9ef">pure</span> <span style="color:#66d9ef">returns</span> (<span style="color:#66d9ef">uint256</span> reward, <span style="color:#66d9ef">uint160</span> secondsInsideX128) {
+</span></span><span style="display:flex;"><span>        <span style="color:#75715e">// this should never be called before the start time
+</span></span></span><span style="display:flex;"><span><span style="color:#75715e"></span>        assert(currentTime <span style="color:#f92672">&gt;=</span> startTime);
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span>        <span style="color:#75715e">// this operation is safe, as the difference cannot be greater than 1/stake.liquidity
+</span></span></span><span style="display:flex;"><span><span style="color:#75715e"></span>				<span style="color:#75715e">// 收益计算时的值减去初始质押时的值
+</span></span></span><span style="display:flex;"><span><span style="color:#75715e"></span>        secondsInsideX128 <span style="color:#f92672">=</span> (secondsPerLiquidityInsideX128 <span style="color:#f92672">-</span> secondsPerLiquidityInsideInitialX128) <span style="color:#f92672">*</span> liquidity;
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span>        <span style="color:#66d9ef">uint256</span> totalSecondsUnclaimedX128 <span style="color:#f92672">=</span>
+</span></span><span style="display:flex;"><span>            ((Math.max(endTime, currentTime) <span style="color:#f92672">-</span> startTime) <span style="color:#f92672">&lt;&lt;</span> <span style="color:#ae81ff">128</span>) <span style="color:#f92672">-</span> totalSecondsClaimedX128;
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span>        reward <span style="color:#f92672">=</span> FullMath.mulDiv(totalRewardUnclaimed, secondsInsideX128, totalSecondsUnclaimedX128);
+</span></span><span style="display:flex;"><span>    }
+</span></span></code></pre></div><h2 id="参考">参考</h2>
+<ul>
+<li><a href="https://www.paradigm.xyz/2021/05/liquidity-mining-on-uniswap-v3">Liquidity Mining on Uniswap v3</a></li>
+<li><a href="https://uploads-ssl.webflow.com/5ad71ffeb79acc67c8bcdaba/5ad8d1193a40977462982470_scalable-reward-distribution-paper.pdf">Scalable Reward Distribution on the Ethereum
+Blockchain</a></li>
+<li><a href="https://liaoph.com/uniswap-v3-4/">Uniswap v3 详解（四）：交易手续费</a></li>
+<li><a href="https://github.com/Uniswap/v3-core">v3-core</a></li>
+<li><a href="https://github.com/Uniswap/v3-staker">v3-staker</a></li>
+</ul>
+
+        </div>
+
+        
+
+
+        
+
+<div class="post-archive">
+    <h2>See Also</h2>
+    <ul class="listing">
+        
+        <li><a href="/post/uni-v2-interview-problem/">一道Uni V2的组LP题目分享</a></li>
+        
+    </ul>
+</div>
+
+
+        <div class="post-meta meta-tags">
+            
+            <ul class="clearfix">
+                
+                <li><a href='/tags/uniswap'>Uniswap</a></li>
+                
+                <li><a href='/tags/defi'>Defi</a></li>
+                
+            </ul>
+            
+        </div>
+    </article>
+    
+    <div id="disqus_thread"></div>
+<script type="application/javascript">
+    window.disqus_config = function () {
+    
+    
+    
+    };
+    (function() {
+        if (["localhost", "127.0.0.1"].indexOf(window.location.hostname) != -1) {
+            document.getElementById('disqus_thread').innerHTML = 'Disqus comments not available by default when the website is previewed locally.';
+            return;
+        }
+        var d = document, s = d.createElement('script'); s.async = true;
+        s.src = '//' + "jusonalien-github-io" + '.disqus.com/embed.js';
+        s.setAttribute('data-timestamp', +new Date());
+        (d.head || d.body).appendChild(s);
+    })();
+</script>
+<noscript>Please enable JavaScript to view the <a href="https://disqus.com/?ref_noscript">comments powered by Disqus.</a></noscript>
+<a href="https://disqus.com" class="dsq-brlink">comments powered by <span class="logo-disqus">Disqus</span></a>
+
+    
+    
+    
+    
+
+    <div class="disqus markdown">
+        <div id="disqus_thread"></div>
+<script type="text/javascript">
+
+(function() {
+    
+    
+    
+    
+
+    var dsq = document.createElement('script'); dsq.type = 'text/javascript'; dsq.async = true;
+    var disqus_shortname = 'jusonalien-github-io';
+    dsq.src = '//' + disqus_shortname + '.disqus.com/embed.js';
+    (document.getElementsByTagName('head')[0] || document.getElementsByTagName('body')[0]).appendChild(dsq);
+})();
+</script>
+<noscript>Please enable JavaScript to view the <a href="http://disqus.com/?ref_noscript">comments powered by Disqus.</a></noscript>
+<a href="http://disqus.com/" class="dsq-brlink">comments powered by <span class="logo-disqus">Disqus</span></a>
+
+    </div>
+</div>
+
+                    <footer id="footer">
+    <div>
+        &copy; 2022 <a href="http://jusonalien.github.io/">jusonalien的博客 By </a>
+        
+    </div>
+    <br />
+    <div>
+        <div class="github-badge">
+            <a href="https://gohugo.io/" target="_black" rel="nofollow"><span class="badge-subject">Powered by</span><span class="badge-value bg-blue">Hugo</span></a>
+        </div>
+        <div class="github-badge">
+            <a href="https://www.flysnow.org/" target="_black"><span class="badge-subject">Design by</span><span class="badge-value bg-brightgreen">飞雪无情</span></a>
+        </div>
+        <div class="github-badge">
+            <a href="https://github.com/flysnow-org/maupassant-hugo" target="_black"><span class="badge-subject">Theme</span><span class="badge-value bg-yellowgreen">Maupassant</span></a>
+        </div>
+    </div>
+</footer>
+
+
+    
+    
+    <script type="text/javascript">
+        window.MathJax = {
+            tex2jax: {
+                inlineMath: [['$', '$']],
+                processEscapes: true
+                }
+            };
+    </script>
+    <script src='//cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.5/MathJax.js?config=TeX-MML-AM_CHTML' async></script>
+
+<a id="rocket" href="#top"></a>
+<script type="text/javascript" src='/js/totop.js?v=0.0.0' async=""></script>
+
+
+
+                </div>
+
+                <div id="secondary">
+    <section class="widget">
+        <form id="search" action='//www.google.com/search' method="get" accept-charset="utf-8" target="_blank" _lpchecked="1">
+      
+      <input type="text" name="q" maxlength="20" placeholder="Search">
+      <input type="hidden" name="sitesearch" value="http://jusonalien.github.io/">
+      <button type="submit" class="submit icon-search"></button>
+</form>
+    </section>
+    
+    <section class="widget">
+        <h3 class="widget-title">最近文章</h3>
+<ul class="widget-list">
+    
+    <li>
+        <a href="http://jusonalien.github.io/post/uniswap-v3-liquidity-mining-analysis/" title="Uniswap-V3的流动性挖矿原理介绍">Uniswap-V3的流动性挖矿原理介绍</a>
+    </li>
+    
+    <li>
+        <a href="http://jusonalien.github.io/post/uni-v2-interview-problem/" title="一道Uni V2的组LP题目分享">一道Uni V2的组LP题目分享</a>
+    </li>
+    
+    <li>
+        <a href="http://jusonalien.github.io/post/aave-v2-gas-optimize/" title="Aave-V2 gas优化策略学习">Aave-V2 gas优化策略学习</a>
+    </li>
+    
+    <li>
+        <a href="http://jusonalien.github.io/post/analysis-hackerdao-attack/" title="HackerDao攻击分析&#43;复现">HackerDao攻击分析&#43;复现</a>
+    </li>
+    
+    <li>
+        <a href="http://jusonalien.github.io/post/parse-data-on-bolock-chain/" title="UniSwap-V2合约的数据解析入门">UniSwap-V2合约的数据解析入门</a>
+    </li>
+    
+    <li>
+        <a href="http://jusonalien.github.io/post/eth2-cbc-ffg/" title="Casper-FFG论文阅读记录">Casper-FFG论文阅读记录</a>
+    </li>
+    
+    <li>
+        <a href="http://jusonalien.github.io/post/pbft-in-deep/" title="pBFT为什么设计成这样？">pBFT为什么设计成这样？</a>
+    </li>
+    
+    <li>
+        <a href="http://jusonalien.github.io/post/consensus-in-short/" title="共识概要">共识概要</a>
+    </li>
+    
+    <li>
+        <a href="http://jusonalien.github.io/post/pos-indeep/" title="深入了解POS">深入了解POS</a>
+    </li>
+    
+    <li>
+        <a href="http://jusonalien.github.io/post/dynamic-merkle/" title="动态多叉merkle-tree的实现 ">动态多叉merkle-tree的实现 </a>
+    </li>
+    
+</ul>
+    </section>
+
+    
+
+    <section class="widget">
+        <h3 class="widget-title"><a href='/categories/'>分类</a></h3>
+<ul class="widget-list">
+    
+</ul>
+    </section>
+
+    <section class="widget">
+        <h3 class="widget-title"><a href='/tags/'>标签</a></h3>
+<div class="tagcloud">
+    
+    <a href="http://jusonalien.github.io/tags/aave/">Aave</a>
+    
+    <a href="http://jusonalien.github.io/tags/blockchain/">blockchain</a>
+    
+    <a href="http://jusonalien.github.io/tags/consensus/">consensus</a>
+    
+    <a href="http://jusonalien.github.io/tags/datastructure/">DataStructure</a>
+    
+    <a href="http://jusonalien.github.io/tags/defi/">DeFi</a>
+    
+    <a href="http://jusonalien.github.io/tags/eth2/">eth2</a>
+    
+    <a href="http://jusonalien.github.io/tags/uniswap/">Uniswap</a>
+    
+    <a href="http://jusonalien.github.io/tags/%E5%85%B1%E8%AF%86%E6%9C%BA%E5%88%B6/">共识机制</a>
+    
+    <a href="http://jusonalien.github.io/tags/%E9%93%BE%E6%95%B0%E6%8D%AE%E8%A7%A3%E6%9E%90/">链数据解析</a>
+    
+</div>
+    </section>
+
+    
+
+    <section class="widget">
+        <h3 class="widget-title">其它</h3>
+        <ul class="widget-list">
+            <li><a href="http://jusonalien.github.io/index.xml">文章 RSS</a></li>
+        </ul>
+    </section>
+</div>
+            </div>
+        </div>
+    </div>
+</body>
+
+</html>

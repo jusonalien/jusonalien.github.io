@@ -6,7 +6,16 @@
     <description>Recent content on jusonalien的博客</description>
     <generator>Hugo -- gohugo.io</generator>
     <language>en-us</language>
-    <lastBuildDate>Wed, 29 Jun 2022 15:14:03 +0800</lastBuildDate><atom:link href="http://jusonalien.github.io/index.xml" rel="self" type="application/rss+xml" />
+    <lastBuildDate>Sun, 10 Jul 2022 20:14:03 +0800</lastBuildDate><atom:link href="http://jusonalien.github.io/index.xml" rel="self" type="application/rss+xml" />
+    <item>
+      <title>Uniswap-V3的流动性挖矿原理介绍</title>
+      <link>http://jusonalien.github.io/post/uniswap-v3-liquidity-mining-analysis/</link>
+      <pubDate>Sun, 10 Jul 2022 20:14:03 +0800</pubDate>
+      
+      <guid>http://jusonalien.github.io/post/uniswap-v3-liquidity-mining-analysis/</guid>
+      <description>这里是基于阅读参考文章后的笔记记录，中间增加了一些自己结合源码+部分细节的推敲 为了能够提升协议的资金利用率，Uniswap-V3在流动性管理</description>
+    </item>
+    
     <item>
       <title>一道Uni V2的组LP题目分享</title>
       <link>http://jusonalien.github.io/post/uni-v2-interview-problem/</link>
