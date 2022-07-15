@@ -6,7 +6,16 @@
     <description>Recent content in DeFi on jusonalien的博客</description>
     <generator>Hugo -- gohugo.io</generator>
     <language>en-us</language>
-    <lastBuildDate>Sun, 10 Jul 2022 20:14:03 +0800</lastBuildDate><atom:link href="http://jusonalien.github.io/tags/defi/index.xml" rel="self" type="application/rss+xml" />
+    <lastBuildDate>Fri, 15 Jul 2022 20:25:03 +0800</lastBuildDate><atom:link href="http://jusonalien.github.io/tags/defi/index.xml" rel="self" type="application/rss+xml" />
+    <item>
+      <title>一个DeFi纵价攻击事件背后的深入分析</title>
+      <link>http://jusonalien.github.io/post/ananlysis-sapcegodzilla-attack/</link>
+      <pubDate>Fri, 15 Jul 2022 20:25:03 +0800</pubDate>
+      
+      <guid>http://jusonalien.github.io/post/ananlysis-sapcegodzilla-attack/</guid>
+      <description>被攻击的合约代码：https://bscscan.deth.net/address/0x2287c04a15bb11ad1358ba5702</description>
+    </item>
+    
     <item>
       <title>Uniswap-V3的流动性挖矿原理介绍</title>
       <link>http://jusonalien.github.io/post/uniswap-v3-liquidity-mining-analysis/</link>
