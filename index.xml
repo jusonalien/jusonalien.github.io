@@ -13,7 +13,7 @@
       <pubDate>Thu, 27 Oct 2022 18:00:03 +0800</pubDate>
       
       <guid>http://jusonalien.github.io/post/bls-notes/</guid>
-      <description>BLS签名-Notes 4337 中针对批量交易的签名使用到了这个方案 椭圆曲线配对 我们定义椭圆曲线配对函数 $$ e:G_1 \times G_2 \to G_T $$ $G_1$ 和 $G_2$ 在这里是加法群， $G_T$ 在这里</description>
+      <description>在EIP-4337中针对批量交易的签名使用到了这个方案 椭圆曲线配对 我们定义椭圆曲线配对函数 $$ e:G_1 \times G_2 \to G_T $$ $G_1$ 和 $G_2$ 在这里是加法群， $G_T$ 在这里是乘法</description>
     </item>
     
     <item>

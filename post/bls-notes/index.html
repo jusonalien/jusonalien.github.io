@@ -197,8 +197,7 @@
         </div>
         
         <div class="post-content">
-            <h1 id="bls签名-notes">BLS签名-Notes</h1>
-<p>4337 中针对批量交易的签名使用到了这个方案</p>
+            <p>在<a href="https://eips.ethereum.org/EIPS/eip-4337">EIP-4337</a>中针对批量交易的签名使用到了这个方案</p>
 <h2 id="椭圆曲线配对">椭圆曲线配对</h2>
 <p>我们定义椭圆曲线配对函数</p>
 <p>$$
@@ -206,9 +205,9 @@ e:G_1 \times G_2 \to G_T
 $$</p>
 <p>$G_1$ 和 $G_2$ 在这里是加法群， $G_T$ 在这里是乘法群，这里对初学者可能比较抽象，可以简单理解为这其实是一个有两个参数的函数，参数1输入到$G_1$，参数2输入到$G_2$，最终返回一个在$G_T$里面的元素</p>
 <p>其中有如下特性</p>
-<p>$$
-e(P,Q+R)=e(P,Q) * e(P,R) \ e(P+S,R) = e(P,R) * e(S,R) \ P, S \in G_1 , Q ,R \in G_2
-$$</p>
+<p>$$ e(P,Q+R)=e(P,Q) * e(P,R) $$
+$$ e(P+S,R) = e(P,R) * e(S,R) $$
+$$ P, S \in G_1 , Q ,R \in G_2 $$</p>
 <p>可以得到以下的推导，其中$[a]$、 $[b]$ 是标量，可以理解成算数上的整数概念</p>
 <p>$$
 e([a]P,[b]Q)=e(P,[b]Q)^a=e(P,Q)^{ab} = e(P,[a]Q)^b = e([b]P,[a]Q)
@@ -235,18 +234,23 @@ $$</p>
 e(g_1,\sigma)=e(pk,H(m))
 $$</p>
 <h3 id="聚合验证过程消息相同的场景">聚合验证过程，消息相同的场景</h3>
-<p>$$</p>
-<p>\sigma_{agg}=\sigma_1+\sigma_2+&hellip;+\sigma_n \ pk_{agg}=pk_1+pk_2+&hellip;+pk_n</p>
-<p>$$</p>
+<p>$$ \sigma_{agg}=\sigma_1+\sigma_2+&hellip;+\sigma_n $$
+$$ pk_{agg}=pk_1+pk_2+&hellip;+pk_n $$</p>
 <p>这里就是BLS聚合的特性所在了，$\sigma_{agg}$ 和 $pk_{agg}$ 由于加法群的封闭性，他们依然是分别属于 $G_2$ 、 $G_1$ 里面，这就导致即使多个签名累加，多个公钥累加，<strong>得到的数据长度依然是固定的</strong></p>
 <p>这样，消息验证者只要验证如下方程的相等即可</p>
-<p>$$
-e(g_1,\sigma_{agg}) \ = e(g_1,\sigma_1+\sigma_2+&hellip;+\sigma_n) \ = e(g_1,[sk_1+sk_2+&hellip;+sk_n]H(m)) \ = e(g_1, H(m))^{[sk_1+sk_2+&hellip;+sk_n]} \ = e([sk_1+sk_2+&hellip;+sk_n]g_1,H(m)) =\ e(pk_{agg},H(m))
-$$</p>
+<p>$$ e(g_1,\sigma_{agg}) $$
+$$ = e(g_1,\sigma_1+\sigma_2+&hellip;+\sigma_n) $$
+$$ = e(g_1,[sk_1+sk_2+&hellip;+sk_n]H(m)) $$
+$$ = e(g_1, H(m))^{[sk_1+sk_2+&hellip;+sk_n]} $$
+$$ = e([sk_1+sk_2+&hellip;+sk_n]g_1,H(m)) =\ e(pk_{agg},H(m)) $$</p>
 <h3 id="4337批量tx聚合的场景">4337批量Tx聚合的场景</h3>
-<p>$$
-e(g_1,\sigma_{agg}) \ = e(g_1,\sigma_1+\sigma_2+&hellip;+\sigma_n) \ = e(g_1,[sk_1]H(m_1)+[sk_2]H(m_1)+&hellip;+[sk_n]H(m_n)) \ = e(g_1,[sk_1]H(m_1))<em>e(g_1,[sk_2]H(m_1))</em>&hellip;*e(g_1,[sk_n]H(m_n)) \ = e(g_1,H(m_1))^{[sk_1]}<em>e(g_1,H(m_1))^{[sk_2]}</em>&hellip;*e(g_1,H(m_n))^{[sk_n]} \ = e([sk_1]g_1,H(m_1))<em>e([sk_2]g_1,H(m_1))</em>&hellip;*e([sk_n]g_1,H(m_n))\ = e(pk_1,H(m_1))<em>e(pk_2,H(m_1))</em>&hellip;*e(pk_n,H(m_n))
-$$</p>
+<p>$$ e(g_1,\sigma_{agg}) $$
+$$ = e(g_1,\sigma_1+\sigma_2+&hellip;+\sigma_n) $$
+$$ = e(g_1,[sk_1]H(m_1)+[sk_2]H(m_1)+&hellip;+[sk_n]H(m_n)) $$
+$$ = e(g_1,[sk_1]H(m_1)) * e(g_1,[sk_2]H(m_1)) * &hellip; * e(g_1,[sk_n]H(m_n)) $$
+$$ = e(g_1,H(m_1))^{[sk_1]} * e(g_1,H(m_1))^{[sk_2]} * &hellip; * e(g_1,H(m_n))^{[sk_n]} $$
+$$ = e([sk_1]g_1,H(m_1)) * e([sk_2]g_1,H(m_1)) * &hellip; * e([sk_n]g_1,H(m_n)) $$
+$$ = e(pk_1,H(m_1)) * e(pk_2,H(m_1)) * &hellip; * e(pk_n,H(m_n))$$</p>
 <p>在4337的场景下，针对多个交易，在验证的时候，要算出每笔交易的哈希值，获取对应地址的公钥，以及聚合后的签名，利用上述的公式进行验证</p>
 <h2 id="bls签名在区块链生态中的应用场景">BLS签名在区块链生态中的应用场景</h2>
 <ul>
