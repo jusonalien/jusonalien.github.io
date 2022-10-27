@@ -7,20 +7,20 @@
     <meta name="viewport" content="width=device-width, initial-scale=1">
     
 
-    <title>一个DeFi纵价攻击事件背后的数学原理分析 | jusonalien的博客</title>
-    <meta property="og:title" content="一个DeFi纵价攻击事件背后的数学原理分析 - jusonalien的博客">
+    <title>BLS 签名算法原理学习 | jusonalien的博客</title>
+    <meta property="og:title" content="BLS 签名算法原理学习 - jusonalien的博客">
     <meta property="og:type" content="article">
         
-    <meta property="article:published_time" content='2022-07-15T20:25:03&#43;08:00'>
+    <meta property="article:published_time" content='2022-10-27T18:00:03&#43;08:00'>
         
         
-    <meta property="article:modified_time" content='2022-07-15T20:25:03&#43;08:00'>
+    <meta property="article:modified_time" content='2022-10-27T18:00:03&#43;08:00'>
         
     <meta name="Keywords" content="">
-    <meta name="description" content="一个DeFi纵价攻击事件背后的数学原理分析">
+    <meta name="description" content="BLS 签名算法原理学习">
         
     <meta name="author" content="">
-    <meta property="og:url" content="http://jusonalien.github.io/post/ananlysis-sapcegodzilla-attack/">
+    <meta property="og:url" content="http://jusonalien.github.io/post/bls-notes/">
     <link rel="shortcut icon" href='/favicon.ico'  type="image/x-icon">
 
     <link rel="stylesheet" href='/css/normalize.css'>
@@ -134,8 +134,17 @@
     <div class="post-toc-content">
         <nav id="TableOfContents">
   <ul>
-    <li><a href="#攻击步骤描述">攻击步骤描述</a></li>
-    <li><a href="#深入分析">深入分析</a></li>
+    <li><a href="#椭圆曲线配对">椭圆曲线配对</a>
+      <ul>
+        <li><a href="#签名过程">签名过程</a></li>
+        <li><a href="#签名验证">签名验证</a></li>
+        <li><a href="#聚合验证过程消息相同的场景">聚合验证过程，消息相同的场景</a></li>
+        <li><a href="#4337批量tx聚合的场景">4337批量Tx聚合的场景</a></li>
+      </ul>
+    </li>
+    <li><a href="#bls签名在区块链生态中的应用场景">BLS签名在区块链生态中的应用场景</a></li>
+    <li><a href="#工程实践的场景">工程实践的场景</a></li>
+    <li><a href="#参考">参考</a></li>
   </ul>
 </nav>
     </div>
@@ -173,10 +182,10 @@
 </script>
     <article class="post">
         <header>
-            <h1 class="post-title">一个DeFi纵价攻击事件背后的数学原理分析</h1>
+            <h1 class="post-title">BLS 签名算法原理学习</h1>
         </header>
         <date class="post-meta meta-date">
-            2022年7月15日
+            2022年10月27日
         </date>
         
         
@@ -188,57 +197,70 @@
         </div>
         
         <div class="post-content">
-            <ul>
-<li>被攻击的合约代码：<a href="https://bscscan.deth.net/address/0x2287c04a15bb11ad1358ba5702c1c95e2d13a5e0#code">https://bscscan.deth.net/address/0x2287c04a15bb11ad1358ba5702c1c95e2d13a5e0#code</a></li>
-<li>攻击的Tx：<a href="https://versatile.blocksecteam.com/tx/bsc/0x7f183df11f1a0225b5eb5bb2296b5dc51c0f3570e8cc15f0754de8e6f8b4cca4">https://versatile.blocksecteam.com/tx/bsc/0x7f183df11f1a0225b5eb5bb2296b5dc51c0f3570e8cc15f0754de8e6f8b4cca4</a></li>
-<li>大致的攻击原理和过程这个推文有说：<a href="https://twitter.com/BlockSecTeam/status/1547456591900749824">https://twitter.com/BlockSecTeam/status/1547456591900749824</a></li>
-</ul>
-<h2 id="攻击步骤描述">攻击步骤描述</h2>
+            <h1 id="bls签名-notes">BLS签名-Notes</h1>
+<p>4337 中针对批量交易的签名使用到了这个方案</p>
+<h2 id="椭圆曲线配对">椭圆曲线配对</h2>
+<p>我们定义椭圆曲线配对函数</p>
+<p>$$
+e:G_1 \times G_2 \to G_T
+$$</p>
+<p>$G_1$ 和 $G_2$ 在这里是加法群， $G_T$ 在这里是乘法群，这里对初学者可能比较抽象，可以简单理解为这其实是一个有两个参数的函数，参数1输入到$G_1$，参数2输入到$G_2$，最终返回一个在$G_T$里面的元素</p>
+<p>其中有如下特性</p>
+<p>$$
+e(P,Q+R)=e(P,Q) * e(P,R) \ e(P+S,R) = e(P,R) * e(S,R) \ P, S \in G_1 , Q ,R \in G_2
+$$</p>
+<p>可以得到以下的推导，其中$[a]$、 $[b]$ 是标量，可以理解成算数上的整数概念</p>
+<p>$$
+e([a]P,[b]Q)=e(P,[b]Q)^a=e(P,Q)^{ab} = e(P,[a]Q)^b = e([b]P,[a]Q)
+$$</p>
+<p>$sk$:  私钥：secret key</p>
+<p>$pk$: 公钥： publick key</p>
+<p>我们得到从产生私钥到生成对应的公钥的过程如下</p>
+<p>$$
+pk = [sk]g_1 , g_1 \in G_1
+$$</p>
+<p>在密码学理论上我们即使得到 $pk$, $g_1$的值也很难获取到$[sk]$，这类问题叫做 <a href="https://en.wikipedia.org/wiki/Discrete_logarithm">离散对数问题(discrete logarithm problem)</a> ，<strong>这个特性非常重要，一定要能直观上去理解</strong></p>
+<h3 id="签名过程">签名过程</h3>
+<p>我们的消息 $m$ 为任意长度的数据，我们需要将 $m$ 映射到群 $G_2$ 上，这个可以理解成一个哈希后得到 $H(m)$, 那我们将得到对应的签名结果</p>
+<p>$$
+\sigma=[sk]H(m)
+$$</p>
+<p>这里有个分布要留意一下，$pk$ 是被分布在了 $G_1$ 里面， $\sigma$ 被分布在 $G_2$ 里面，这顺序其实是可以互换的，只是 $G_1$ 里面的点数量少，计算快，存储量也少，$G_2$ 里面点数据多，存储多，计算也慢，要根据应用场景来做tradeoff</p>
+<h3 id="签名验证">签名验证</h3>
+<p>$$
+e(pk,H(m))=e([sk]g_1,H(m))=e(g_1,H(m))^{(sk)}=e(g_1,[sk]H(m))=e(g_1,\sigma)
+$$</p>
+<p>消息验证者只要验证如下两边是否相等即可：</p>
+<p>$$
+e(g_1,\sigma)=e(pk,H(m))
+$$</p>
+<h3 id="聚合验证过程消息相同的场景">聚合验证过程，消息相同的场景</h3>
+<p>$$</p>
+<p>\sigma_{agg}=\sigma_1+\sigma_2+&hellip;+\sigma_n \ pk_{agg}=pk_1+pk_2+&hellip;+pk_n</p>
+<p>$$</p>
+<p>这里就是BLS聚合的特性所在了，$\sigma_{agg}$ 和 $pk_{agg}$ 由于加法群的封闭性，他们依然是分别属于 $G_2$ 、 $G_1$ 里面，这就导致即使多个签名累加，多个公钥累加，<strong>得到的数据长度依然是固定的</strong></p>
+<p>这样，消息验证者只要验证如下方程的相等即可</p>
+<p>$$
+e(g_1,\sigma_{agg}) \ = e(g_1,\sigma_1+\sigma_2+&hellip;+\sigma_n) \ = e(g_1,[sk_1+sk_2+&hellip;+sk_n]H(m)) \ = e(g_1, H(m))^{[sk_1+sk_2+&hellip;+sk_n]} \ = e([sk_1+sk_2+&hellip;+sk_n]g_1,H(m)) =\ e(pk_{agg},H(m))
+$$</p>
+<h3 id="4337批量tx聚合的场景">4337批量Tx聚合的场景</h3>
+<p>$$
+e(g_1,\sigma_{agg}) \ = e(g_1,\sigma_1+\sigma_2+&hellip;+\sigma_n) \ = e(g_1,[sk_1]H(m_1)+[sk_2]H(m_1)+&hellip;+[sk_n]H(m_n)) \ = e(g_1,[sk_1]H(m_1))<em>e(g_1,[sk_2]H(m_1))</em>&hellip;*e(g_1,[sk_n]H(m_n)) \ = e(g_1,H(m_1))^{[sk_1]}<em>e(g_1,H(m_1))^{[sk_2]}</em>&hellip;*e(g_1,H(m_n))^{[sk_n]} \ = e([sk_1]g_1,H(m_1))<em>e([sk_2]g_1,H(m_1))</em>&hellip;*e([sk_n]g_1,H(m_n))\ = e(pk_1,H(m_1))<em>e(pk_2,H(m_1))</em>&hellip;*e(pk_n,H(m_n))
+$$</p>
+<p>在4337的场景下，针对多个交易，在验证的时候，要算出每笔交易的哈希值，获取对应地址的公钥，以及聚合后的签名，利用上述的公式进行验证</p>
+<h2 id="bls签名在区块链生态中的应用场景">BLS签名在区块链生态中的应用场景</h2>
 <ul>
-<li>1、先用闪电贷借出USDT</li>
-<li>2、用USDT兑换大量的SpaceGodzilla的token</li>
-<li>3、调用合约的swapAndLiquifyStepv1函数，将合约自身的资产都拿去Dex做LP</li>
-<li>4、将步骤2获得的token再兑换成USDT，获得套利</li>
+<li>以太坊一开始的POS的设计，只能支持几百个validator，P2P之间节点信息认证需要传送大量的验证消息，导致开销很大，BLS大大节省了验证签名数据的传输空间, 叫做**<a href="https://ethresear.ch/t/pragmatic-signature-aggregation-with-bls/2105">BLS-12-318</a>**</li>
+<li>EIP-4337中，针对多笔合并交易后的签名压缩优化的使用</li>
 </ul>
-<h2 id="深入分析">深入分析</h2>
-<p>这个攻击手法属于纵价攻击类型，可能大家都觉得只要有swapAndLiquifyStepv1的功能漏洞就一定能攻击成功。那么仔细想想，事实真的这样子吗？</p>
-<p>在跟技术群友讨论这个漏洞攻击的过程中有人对于这个操作下来为什么就会产有多的USDT生成而产生疑惑，其实一开始我在看这个攻击过程的时候也没往这方向想，就觉得靠着K线公式的原理一来一回产生价格差而实现套利，经过思考后发现事情并没有那么多简单。</p>
-<p><strong>这里降低分析的复杂度，不考虑Dex的交易过程中的手续费磨损</strong></p>
-<p><strong>同时也要确保token再转账的过程中没有额外的手续费</strong></p>
-<p>在攻击前</p>
-<p>$$
-X \cdot Y = K
-$$</p>
-<p>用闪电贷获得的  $\Delta{Y}$ 兑换 $\Delta{X}$，满足：</p>
-<p>$$
-(X-\Delta{X}) \cdot (Y + \Delta{Y}) = K
-$$</p>
-<p>然后触发漏洞函数，让合约的资产去做LP：</p>
-<p>$$
-(X-\Delta{X}+LP^X) \cdot (Y + \Delta{Y} + LP^Y) = K&rsquo;
-$$</p>
-<p>这个时候，$K$ 值显然是变大的，$K&rsquo; \gt K$</p>
-<p>然后用获得的 $\Delta{X}$ 再全部兑换成 $\Delta{Y}&rsquo;$，得到</p>
-<p>$$
-(X-\Delta{X}+LP^X + \Delta{X}) \cdot (Y + \Delta{Y} + LP^Y - \Delta{Y}&rsquo;) = K&rsquo;
-$$</p>
-<p>可以得到</p>
-<p>$$
-\Delta{Y}&rsquo;  = Y + \Delta{Y} + LP^Y - \frac{(X-\Delta{X}+LP^X)\cdot(Y+\Delta{Y}+LP^Y)}{X+LP^X}
-$$</p>
-<p>我们会期望得到 $\Delta{Y}&rsquo; \gt \Delta{Y}$, 这样操作才会获利，因此取</p>
-<p>$$
-\Delta{Y}&rsquo; - \Delta{Y} = Y  + LP^Y - \frac{(X-\Delta{X}+LP^X)\cdot(Y+\Delta{Y}+LP^Y)}{X+LP^X} \gt 0
-$$</p>
-<p>相关约束：</p>
-<p>$$
-(X-\Delta{X}) \cdot (Y + \Delta{Y}) = K
-$$</p>
-<p>$$
-\frac{LP^X}{LP^Y} = \frac{X-\Delta{X}}{Y + \Delta{Y}}
-$$</p>
-<p>其中 $X$ 和 $Y$ 都是常量，套利者需要控制好 $\Delta{Y}$ 和 $LP^Y$ 的数量，确保上面的不等式成立</p>
-<p>因此，这套攻击手法还是要看LP的初始状态以及在攻击过程中的一些参数的配合，才能达到套利的目的，不然自己会被反撸。</p>
+<h2 id="工程实践的场景">工程实践的场景</h2>
+<h2 id="参考">参考</h2>
+<ul>
+<li><a href="https://mirror.xyz/0x6afeB3d9E380787e7D0a17Fc3CA764Bb885014FA/D3g-4UPRLkAnug-p6AZYfjgXWo-psaTulyu3SaL35vg">BLS Signature Aggregation: Under the Hood</a></li>
+<li><a href="https://hackmd.io/@benjaminion/bls12-381">BLS12-381 For The Rest Of Us</a></li>
+<li><a href="https://crypto.stanford.edu/~dabo/pubs/papers/BLSmultisig.html">BLS Multi-Signatures With Public-Key Aggregation</a></li>
+<li>信标链上使用 BLS签名 :<strong><a href="https://ethresear.ch/t/pragmatic-signature-aggregation-with-bls/2105">Pragmatic signature aggregation with BLS</a></strong></li>
+</ul>
 
         </div>
 
@@ -247,23 +269,12 @@ $$</p>
 
         
 
-<div class="post-archive">
-    <h2>See Also</h2>
-    <ul class="listing">
-        
-        <li><a href="/post/aave-v2-gas-optimize/">Aave-V2 gas优化策略学习</a></li>
-        
-        <li><a href="/post/analysis-hackerdao-attack/">HackerDao攻击分析&#43;复现</a></li>
-        
-    </ul>
-</div>
-
 
         <div class="post-meta meta-tags">
             
             <ul class="clearfix">
                 
-                <li><a href='/tags/defi'>DeFi</a></li>
+                <li><a href='/tags/crypto'>Crypto</a></li>
                 
             </ul>
             

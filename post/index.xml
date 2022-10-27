@@ -6,7 +6,16 @@
     <description>Recent content in Posts on jusonalien的博客</description>
     <generator>Hugo -- gohugo.io</generator>
     <language>en-us</language>
-    <lastBuildDate>Fri, 15 Jul 2022 20:25:03 +0800</lastBuildDate><atom:link href="http://jusonalien.github.io/post/index.xml" rel="self" type="application/rss+xml" />
+    <lastBuildDate>Thu, 27 Oct 2022 18:00:03 +0800</lastBuildDate><atom:link href="http://jusonalien.github.io/post/index.xml" rel="self" type="application/rss+xml" />
+    <item>
+      <title>BLS 签名算法原理学习</title>
+      <link>http://jusonalien.github.io/post/bls-notes/</link>
+      <pubDate>Thu, 27 Oct 2022 18:00:03 +0800</pubDate>
+      
+      <guid>http://jusonalien.github.io/post/bls-notes/</guid>
+      <description>BLS签名-Notes 4337 中针对批量交易的签名使用到了这个方案 椭圆曲线配对 我们定义椭圆曲线配对函数 $$ e:G_1 \times G_2 \to G_T $$ $G_1$ 和 $G_2$ 在这里是加法群， $G_T$ 在这里</description>
+    </item>
+    
     <item>
       <title>一个DeFi纵价攻击事件背后的数学原理分析</title>
       <link>http://jusonalien.github.io/post/ananlysis-sapcegodzilla-attack/</link>
